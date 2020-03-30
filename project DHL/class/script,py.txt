@@ -1,0 +1,10 @@
+import requests
+import json
+import pprint
+
+url = 'http://35.213.166.175:3000'
+#payload = open("request.json")
+headers = {'content-type': 'application/json', 'Accept-Charset': 'UTF-8'}
+#r = requests.post(url, data=open(morningFileName, 'rb'), headers=headers)
+# r = requests.post(url, data=open('morning.json', 'rb'), headers=headers)    
+r = requests.post(url, data=open('morning.json', 'rb'), headers=headers)    
