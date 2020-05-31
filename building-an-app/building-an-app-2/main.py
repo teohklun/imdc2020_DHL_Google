@@ -1,9 +1,12 @@
 #global param, config
 
 bucketName = "real-bucket-dhl"
+bucketTempName = "real-bucket-dhl-temp"
 csvPath = "3.csv"
 gStorage = 'gs://real-bucket-dhl/3.csv'
-
+optimalCsvName = "optimalRoutes.csv"
+optimalCsvPath = "files/february/" + optimalCsvName
+gStorageOptimalCsv = "gs://real-bucket-dhl/files/february/" + optimalCsvName
 url = 'http://35.213.166.175:3000' #vroomRoute
 
 date = "20200204"
@@ -28,7 +31,7 @@ import re
 from job import Job
 from vehicle import Vehicle
 import importlib
-import numpy as np
+import numpy as np 
 from typing import Dict, Tuple, Sequence, List, Any
 import pandas as pd 
 import datetime
@@ -348,38 +351,6 @@ def getDeliveryRoute(partialDataFrame : List, fullDataFrame : List, session : st
                 else:
                     print("session error")
             
-#             if(arrivalTime == arrivalTime):
-#                 if( (session == "m") & (getMiliSec(departTime) > getMiliSec("08:45:00") ) & ( getMiliSec(arrivalTime) < getMiliSec("13:59:00") ) ):
-#                     valid = True
-#                 elif((session == "a")& (getMiliSec(departTime) > getMiliSec("14:00:00") ) & (getMiliSec(arrivalTime) < getMiliSec("23:59:00")  ) ):
-#                     valid = True
-#                 else:
-#                     print("condition not meet")
-#                     valid = False
-#             elif( session == "m" & (getMilliSec(departTime) > getMiliSec("08:45:00") & getMilliSec(departTime) > getMiliSec("14:00:00") ):
-#                  valid = True
-#             elif( session == "a" & (getMilliSec(departTime) > getMiliSec("08:45:00") & getMilliSec(departTime) > getMiliSec("14:00:00") ) 
-#                 valid = True
-#             else:
-#                 valid =False
-#                  print("unknown situation 4")
-
-                
-            
-#csv not two departure / arrival per session
-#                             if( (session == "m") & 
-#                                (getMiliSec(x["Act Tm"]) > getMiliSec("08:45") ) & 
-#                                (getMiliSec(x["Act Tm"]) < getMiliSec("13:59") ) ):
-#                     #                 print("here before")
-#                                 valid = True
-#                             elif( (session == "a") & 
-#                                  (getMiliSec(x["Act Tm"]) > getMiliSec("14:00") )& 
-#                                  (getMiliSec(x["Act Tm"]) < getMiliSec("23:59") ) ):
-#                                 valid = True
-#                             else:
-#                     #                 print(x)
-#                                 print("undefined session 222")
-#                                 valid=False
             if(deliveryListRoute != []):
                 deliveryList.append(deliveryListRoute)
                 deliveryListRoute = []
@@ -418,6 +389,30 @@ def getDeliveryRoute(partialDataFrame : List, fullDataFrame : List, session : st
 #     print(deliveryList[0])
     return deliveryList, fullDataFrame
 
+def getSessionWithTimeWindowMSec(start : int, end : int):
+    timeWindowM = getTimeWindow(morningStart,  morningEnd )
+    timeWindowA = getTimeWindow(afternoonStart,  afternoonEnd )
+    if(start >= timeWindowM[0] and end <= timeWindowM[1]):
+        session = "m"
+    elif(start >= timeWindowA[0] and end <= timeWindowA[1]):
+        session = "a"
+    else:
+        session = "asdas"
+    return session
+
+def getSessionWithTimeWindow(start: str, end: str) -> str:
+    start, end = getTimeWindow(start, end)
+    timeWindowM = getTimeWindow(morningStart,  morningEnd )
+    timeWindowA = getTimeWindow(afternoonStart,  afternoonEnd )
+    if(start >= timeWindowM[0] and end <= timeWindowM[1]):
+        session = "m"
+    elif(start >= timeWindowA[0] and end <= timeWindowA[1]):
+        session = "a"
+    else:
+        session = "asdas"
+    return session
+
+    
 def getTimeWindowWithSession(session : str) -> List:
     if(session == "m"):
 #         timeWindow = getTimeWindow("09:00",  "18:45" )
@@ -433,7 +428,7 @@ def getTimeWindowWithSession(session : str) -> List:
         timeWindow = getTimeWindow("09:00:00",  "13:00:00" ) #default morning
         
     return timeWindow
-
+    
 def isNotNull(var):
     return var == var
 def createJobsAndVehiclesList(deliveryList : List, timeWindow : List, zipSet :List):
@@ -730,18 +725,18 @@ def getResponseFileAsDict():
     dict_t = json.loads(json_data_bytes)
     return dict_t
 
-def checkGFileExists(fileName : str) -> bool:
+def checkGFileExists(fileName : str, bucketName = bucketName) -> bool:
     client = storage.Client()
     bucket = client.get_bucket(bucketName)
 #     name = 'files/february/optimalRoutes.csv'
 #     name = "files/february/response/20200204-a-447-response.json"
     return storage.Blob(bucket=bucket, name=fileName).exists(client)
 
-def handleOptimalRoute(dataFrame):
+def handleOptimalRoute(dataFrame, columns):
     from datetime import datetime
     client = storage.Client()
     bucket = client.get_bucket(bucketName)
-    pathForRead = 'gs://real-bucket-dhl/files/february/optimalRoutes.csv'
+    gStorageOptimalCsv = 'gs://real-bucket-dhl/files/february/optimalRoutes.csv'
     csvFilePathName = 'files/february/optimalRoutes.csv'
     historyFilePath = 'files/february/removed/'
 
@@ -756,7 +751,7 @@ def handleOptimalRoute(dataFrame):
 #     create new csv
     else:
         print("update optimal route csv")
-        oldDataFrame = pd.read_csv(pathForRead)
+        oldDataFrame = pd.read_csv(gStorageOptimalCsv)
         #check this partial inside this csv
         batchID = dataFrame.iloc[0]["batchID"]
         foundPartialDataFrame = oldDataFrame.loc[oldDataFrame["batchID"] == batchID]
@@ -771,35 +766,45 @@ def handleOptimalRoute(dataFrame):
         #update the csv
             oldDataFrame = oldDataFrame.drop(oldDataFrame.index[foundPartialDataFrame.index.to_list()])
 #             oldDataFrame = oldDataFrame.drop(oldDataFrame.index[foundPartialDataFrame.index.to_list()])
-
+        
+        
         newDataFrame = pd.concat([oldDataFrame,dataFrame])
         newDataFrame.reset_index()
-        string = newDataFrame.to_csv(None, index=False)
+        string = newDataFrame.to_csv(None, index=False, columns = columns)
         blob = bucket.blob(csvFilePathName)
         blob.upload_from_string(string, "application/vnd.ms-excel")
 
-def processRoutedResponse(fullDataFrame):
+def getSingleRouteFromRoutes(routes : dict) -> dict:
+    singleRoute = routes.copy()
+    singleRoute["routes"] = [routes["routes"][0]]
+    singleRoute["summary"]["distance"] = routes["routes"][0]["distance"]
+    singleRoute["summary"]["duration"] = routes["routes"][0]["duration"]
+    singleRoute["summary"]["service"] = routes["routes"][0]["service"]
+    singleRoute["summary"]["cost"] = routes["routes"][0]["cost"]
+    singleRoute["summary"]["delivery"] = [routes["routes"][0]["delivery"]]
+    singleRoute["summary"]["amount"] = [routes["routes"][0]["amount"]]
+    return singleRoute
+        
+def processRoutedResponse(fullDataFrame, dict_t, session):
     
     client = storage.Client()
     bucket = client.get_bucket(bucketName)
-    
-    for routes in test_dict_t["routes"]:
+    for routes in dict_t["routes"]:
         df = pd.DataFrame()
-        vehicleInformation = fullDataFrame.loc[fullDataFrame['id'] == routes["vehicle"]]
-        actCkptCode = vehicleInformation["Act Ckpt Code"].values[0]
+        vehicleInformation = fullDataFrame.loc[fullDataFrame['id'] == routes["vehicle"]].iloc[0]
+#         vehicleInformation = fullDataFrame.loc[fullDataFrame['id'] == routes["vehicle"]]
+        actCkptCode = vehicleInformation["Act Ckpt Code"]
+#         actCkptCode = vehicleInformation["Act Ckpt Code"].values[0]
         vehicleInformation['id'] = vehicleInformation['id'].astype("int")
         vehicleInformation['id'] = vehicleInformation['id'].astype("str")
-        vehicleID = vehicleInformation['id'].values[0]
+        vehicleID = vehicleInformation['id']
 
-        date = vehicleInformation["Act Dt"].values[0]
-        name = vehicleInformation["Courier id"].values[0]
-        routes["steps"][0]["name"] = vehicleInformation["Courier id"].values[0]
-        
-        tempSingleRoute = test_dict_t.copy()
-#         del tempSingleRoute["routes"]
-        tempSingleRoute["routes"] = [test_dict_t["routes"][0]]
-        
-        content = json.dumps(tempSingleRoute, cls=NpEncoder) 
+        date = int(vehicleInformation["Act Dt"])
+        name = vehicleInformation["Courier id"]
+        routes["steps"][0]["name"] = vehicleInformation["Courier id"]
+        singleRoute = getSingleRouteFromRoutes(dict_t)
+
+        content = json.dumps(singleRoute, cls=NpEncoder) 
         blob = bucket.blob("files/february/response/"+ str(date) +  "-" + session  + "-" + vehicleID + "-response.json")
         blob.upload_from_string(content, "application/json")
         print("created json file")
@@ -807,22 +812,22 @@ def processRoutedResponse(fullDataFrame):
         for indexStep, step in enumerate( routes["steps"], start = 1):
             if(step["type"] == "start" or step["type"] == "end"):
                 startingInformation = vehicleInformation.copy()
-                startingInformation.at[startingInformation.index[0], "Act Tm"] = getTime24hour(step["arrival"])
+                startingInformation["Act Tm"] = getTime24hour(step["arrival"])
                 startingInformation["batchID"] = str(date) +  "-" + session  + "-" + str(vehicleID)
+                startingInformation["id"] = str(startingInformation["id"])
 
                 if(step["type"] == "end"):
     #                 startingInformation.at[startingInformation.index[0], "id"] = str(startingInformation["id"].values[0]) + "arrvd"
-                    startingInformation.at[startingInformation.index[0], "Act Ckpt Code"] = "ARRVD"
-                if(actCkptCode == "DEPAR"):
-                    startingInformation.at[startingInformation.index[0], "id"] = str(startingInformation["id"].values[0]) + "arrvd"
-                elif(actCkptCode == "ARRVD"):
-                    startingInformation.at[startingInformation.index[0], "id"] = str(startingInformation["id"].values[0]) + "depart"
+#                     startingInformation.at[startingInformation.index[0], "Act Ckpt Code"] = "ARRVD"
+                    startingInformation["Act Ckpt Code"] = "ARRVD"
+                elif(step["type"] == "start"):
+                     startingInformation["Act Ckpt Code"] = "DEPAR"
                 else:
-                    print("unprepare sitaution 3")
+                    print("unprepare situation 3")
                     print("actCkptCode : " + actCkptCode)
                 df = df.append(startingInformation)
             elif(step["type"] == "job"):
-                jobInformation = fullDataFrame.loc[fullDataFrame['id'] == step["job"]]
+                jobInformation = fullDataFrame.loc[fullDataFrame['id'] == int(step["job"])]
                 if(jobInformation["Street"].values[0] == jobInformation["Street"].values[0]):
                     string = jobInformation["Street"].values[0]
                     description = re.sub('\s+', ' ', string)
@@ -830,13 +835,12 @@ def processRoutedResponse(fullDataFrame):
 
                 else:
                     step["description"] = "Street is blank"
-
-                new = pd.DataFrame({'PUD Svc Area': [vehicleInformation["PUD Svc Area"].values[0]], 
-                         'PUD Fac': [vehicleInformation["PUD Fac"].values[0]],
-                         'PUD Rte': [vehicleInformation["PUD Rte"].values[0]],          
-                         'PUD Cycle': [vehicleInformation["PUD Cycle"].values[0]],
-                          'Courier id':[vehicleInformation["Courier id"].values[0]],
-                          'Courier Type':  [vehicleInformation["Courier Type"].values[0]],
+                new = pd.DataFrame({'PUD Svc Area': [vehicleInformation["PUD Svc Area"]], 
+                         'PUD Fac': [vehicleInformation["PUD Fac"]],
+                         'PUD Rte': [vehicleInformation["PUD Rte"]],          
+                         'PUD Cycle': [vehicleInformation["PUD Cycle"]],
+                          'Courier id':[vehicleInformation["Courier id"]],
+                          'Courier Type':  [vehicleInformation["Courier Type"]],
                           'Customer Name': [jobInformation["Customer Name"].values[0]],
                           'Street': [jobInformation["Street"].values[0]],
                           'zip': [jobInformation["zip"].values[0]],
@@ -866,6 +870,9 @@ def processRoutedResponse(fullDataFrame):
                          'id' : [str(step["job"])],
                          'batchID' : [str(date) +  "-" + session  + "-" + str(vehicleID)],
                                    })
+#                 print(new)
+                columns =["PUD Svc Area","PUD Fac","PUD Rte","PUD Cycle","Courier id","Courier Type","Customer Name","Street","zip","City","Act Dt","Act Base","Delivery Type","Pickup Type","Prod Grp","Prod Code","ShpCnt","Pallets Pcs","Parcel Pcs","Total Pcs","Weight","AR dtm","Act Tm","Open","Closed","lat","lgtd","awb_booking","Act Ckpt Code","PuD Type","Stop Code","MarkerColor","id","batchID"]
+#                 df = df[]]
                 df = df.append(new)
             else:
                 print("unprepare situation 1")
@@ -889,19 +896,20 @@ def processRoutedResponse(fullDataFrame):
 
         
         
-        string = df.to_csv(None, index=False)
+        string = df.to_csv(None, index=False, columns = columns)
         blob = bucket.blob("files/february/response/"+ str(date) +  "-" + session  + "-" + vehicleID + ".csv")
 #         print("files/february/response/"+ str(date) +  "-" + session  + "-" + str(vehicleInformation['id']) + ".csv" )
 #         print(str(vehicleInformation['id'].astype("int")) + ".csv" )
 
         blob.upload_from_string(string, "application/vnd.ms-excel")
 
-        df.to_csv("routes/"+ str(date) + "/" +session  + "/" + str(name) + ".csv", index=False)
+#         df.to_csv("routes/"+ str(date) + "/" +session  + "/" + str(name) + ".csv", index=False)
         print("created csv file . . ..")
-        handleOptimalRoute(df)
+#         print(df)
+        handleOptimalRoute(df, columns)
 
     blob = bucket.blob(getInputeForResponseFileName(date,session))
-    content = json.dumps(test_dict_t, cls=NpEncoder) #the processed routes
+    content = json.dumps(dict_t, cls=NpEncoder) #the processed routes
     blob.upload_from_string(content, "application/json")
     print("created updated response json file")
 
@@ -911,14 +919,19 @@ def tryGotUnassignedInResponse2(date : str,  session: str, street: None, unassig
     bucket = client.get_bucket(bucketName)
 
     fullDataFrame = pd.read_csv(gStorage)
+    tempLen = len(fullDataFrame)
     fullDataFrame = fullDataFrame.loc[(fullDataFrame['Courier Type'] != "NON_GCA5") ]
+    tempLen2 = len(fullDataFrame)
+    if(tempLen> tempLen2):
+        fullDataFrame.reset_index()
     #initial id column
     if 'id' not in fullDataFrame .columns:
         fullDataFrame["id"] = fullDataFrame.index+1
     
     # fullDataFrame = pd.read_csv(csvPath)
-    if(~(street != street)):
-        fullDataFrame, newAwbBooking = addJob(fullDataFrame, date, session, street)
+    
+#     if(street == street):
+#         fullDataFrame, newAwbBooking = addJob(fullDataFrame, date, session, street)
 
     courierAndZip = fullDataFrame[["Courier id", "zip"]]
     courierAndZip = courierAndZip[fullDataFrame['zip'].notna()]
@@ -954,25 +967,25 @@ def tryGotUnassignedInResponse2(date : str,  session: str, street: None, unassig
 #         blob = bucket.blob(getResponseFileName(date, session))
 
 #         blob.upload_from_string(r.content, "application/json")
-
-        processRoutedResponse(fullDataFrame)
+        dict_t = json.loads(r.content)
+        processRoutedResponse(fullDataFrame, dict_t, session)
         
     #     #update the added job to csv
-        newJobDataFrame = fullDataFrame.loc[(fullDataFrame["awb_booking"] == newAwbBooking)]
-
+#         newJobDataFrame = fullDataFrame.loc[(fullDataFrame["awb_booking"] == newAwbBooking)]
+# 
     #     #temp fix
-        fullDataFrame.at[newJobDataFrame.index[0], "Courier Type"] = "NON_GCA5"
+#         fullDataFrame.at[newJobDataFrame.index[0], "Courier Type"] = "NON_GCA5"
 
         string = fullDataFrame.to_csv(None, index=False)
 
-        blob = bucket.blob("3.csv")
+        blob = bucket.blob(csvPath)
 
         blob.upload_from_string(string, "application/vnd.ms-excel")
 
         dict_t = json.loads(r.content)
-        dict_t["extra"] = {}
+#         dict_t["extra"] = {}
 
-        dict_t["extra"]["awb_booking"] = newAwbBooking
+#         dict_t["extra"]["awb_booking"] = newAwbBooking
 
         responseDict = gotUnssigned(dict_t)
 
@@ -981,9 +994,257 @@ def tryGotUnassignedInResponse2(date : str,  session: str, street: None, unassig
 #     print(content)
     return dict_t
 
+def uploadFile(fileName, content, bucketName = bucketName):
+    client = storage.Client()
+    bucket = client.get_bucket(bucketName)
+    
+    blob = bucket.blob(fileName)
+    name, extensionName = fileName.split(".")
+    if(extensionName == "csv"):
+        print("csv upload")
+#         string = fullDataFrame.to_csv(None, index=False)
+        blob.upload_from_string(content, "application/vnd.ms-excel")
+    elif(extensionName == "json"):
+        blob.upload_from_string(content, "application/json")
+    else: 
+        print("file not support by this function yet")
+    
+#api part for chen wei
+def getRoutedGeocode(rowID : int) -> list:
+    df = pd.read_csv(gStorageOptimalCsv)
+    job = df.loc[df["id"].astype('int') == rowID]
+    if(job.empty):
+        return "rowID not find"
+    else:
+        jobs = df.loc[df["batchID"] == job["batchID"].values[0] ]
+        if(jobs.empty):
+            return "contact admin"
+        else:
+            return jobs["lat"].to_list(), jobs["lgtd"].to_list()
+
+def getETAByID(rowID : int) -> str:
+    df = pd.read_csv(gStorageOptimalCsv)
+    job = df.loc[df["id"].astype('int') == rowID]
+    if(job.empty):
+        return "rowID not find"
+    else:
+        return job["Act Tm"].values[0]
+
+def makeTempDataFrameRow(df):
+    df["Courier Type"] = "NON_GCA5"
+    return df
+    
+def changeTime(rowID : int, start: str, end : str ) -> list:
+    df = pd.read_csv(gStorageOptimalCsv)
+    dfJob=df.loc[df["id"].astype('int') == rowID]
+#     print(len(dfJob))
+    fullDataFrame = pd.read_csv(gStorage)
+    fullDataFrame = fullDataFrame.loc[(fullDataFrame['Courier Type'] != "NON_GCA5") ]
+    if(dfJob.empty):
+        return "rowID not find"
+    session = getSessionWithTimeWindow(start, end)
+    print(session)
+    if(session not in ["m", "a"]):
+        return "time interval error"
+
+    courierAndZip = fullDataFrame[["Courier id", "zip"]]
+    courierAndZip = courierAndZip[fullDataFrame['zip'].notna()]
+    courierAndZip = courierAndZip[courierAndZip["zip"].astype(str).str.isdigit()] 
+    zipSet = courierAndZip.groupby(["Courier id"])["zip"].aggregate(lambda x: set(map(int, x)))
+    partialDataFrame = df
+    partialDataFrame = partialDataFrame.loc[partialDataFrame['batchID'] == dfJob["batchID"].values[0]]
+    deliveryListRoute, df = getDeliveryRoute(partialDataFrame, df, session)
+    jobsList, vehicleList = createJobsAndVehiclesList(deliveryListRoute, getTimeWindowWithSession(session), zipSet)
+    for job in jobsList:
+        if(job.id == rowID):
+            job.time_windows = [getTimeWindow(start, end)]
+            break
+    dict_t = createDictionaryObjectJobsVehicles(jobsList,vehicleList)
+    content = json.dumps(dict_t, cls=NpEncoder) 
+    headers = {'content-type': 'application/json', 'Accept-Charset': 'UTF-8'}
+    r = requests.post(url, data=content, headers=headers)    
+    
+    if (r.status_code != 200) :
+        print ("Error request code : ")
+        print(r.status_code)
+        print(r.content)
+    
+    else:
+        dict_t = json.loads(r.content)
+        if(dict_t["summary"]["unassigned"] > 0):
+            return "could not fit the time range"
+        else:
+            print("here")
+            temp = dfJob.copy()
+            temp["Open"] = start
+            temp["Closed"] = end
+            temp["Courier Type"] = "NON_GCA5"
+            df = addRowToDataFrame(dfJob.index[0] + 1, df, temp.iloc[0])
+            uploadFile(optimalCsvPath ,df.to_csv(None, index=False))
+#             uploadFile(dfJob["batchID"].values[0] + "-temp"+ str(job["id"].values[0]) +"-response.json", r.content, bucketTempName)
+            return "possible, update with id " + str(rowID)
+
+def confirmChangeTime(rowID : str):
+    from time import strftime
+    from time import gmtime    
+    df = pd.read_csv(gStorageOptimalCsv)
+    dfJob = df.loc[df["id"].astype('int') == rowID]
+    if(dfJob.empty):
+        return "id not found"
+    tempJob = df.loc[(df["id"].astype('int') == rowID) & (df["Courier Type"] == "NON_GCA5" )]
+    
+    tempJob["Courier Type"] =  dfJob["Courier Type"]
+    df = df.drop(dfJob.index[0])
+    start = tempJob["Open"].values[0]
+    end = tempJob["Closed"].values[0]
+    session = getSessionWithTimeWindow(start,end)
+    
+
+    
+    fullDataFrame = pd.read_csv(gStorage)
+    fullDataFrame = fullDataFrame.loc[(fullDataFrame['Courier Type'] != "NON_GCA5") ]
+    if(session not in ["m", "a"]):
+        return "time interval error"
+    
+    courierAndZip = fullDataFrame[["Courier id", "zip"]]
+    courierAndZip = courierAndZip[fullDataFrame['zip'].notna()]
+    courierAndZip = courierAndZip[courierAndZip["zip"].astype(str).str.isdigit()] 
+    zipSet = courierAndZip.groupby(["Courier id"])["zip"].aggregate(lambda x: set(map(int, x)))
+    partialDataFrame = df
+    partialDataFrame = partialDataFrame.loc[partialDataFrame['batchID'] == dfJob["batchID"].values[0]]
+    deliveryListRoute, df = getDeliveryRoute(partialDataFrame, df, session)
+    jobsList, vehicleList = createJobsAndVehiclesList(deliveryListRoute, getTimeWindowWithSession(session), zipSet)
+    for job in jobsList:
+        if(job.id == rowID):
+            job.time_windows = [getTimeWindow(start, end)]
+            break
+    dict_t = createDictionaryObjectJobsVehicles(jobsList,vehicleList)
+    content = json.dumps(dict_t, cls=NpEncoder) 
+    headers = {'content-type': 'application/json', 'Accept-Charset': 'UTF-8'}
+    r = requests.post(url, data=content, headers=headers)    
+    
+    if (r.status_code != 200) :
+        print ("Error request code : ")
+        print(r.status_code)
+        print(r.content)
+    
+    else:
+        dict_t = json.loads(r.content)
+        if(dict_t["summary"]["unassigned"] > 0):
+            return "could not fit the time range"
+        else:
+            uploadFile(optimalCsvPath ,df.to_csv(None, index=False))
+            uploadFile(dfJob["batchID"].values[0] + "-temp"+ str(dfJob["id"].values[0]) +"-response.json", r.content, bucketTempName)
+    
+    responseFile = "gs://real-bucket-dhl/files/february/response/" + str(dfJob["batchID"].values[0]) + "-temp-response.json"
+    
+    client = storage.Client()
+    
+    if (not checkGFileExists(str(dfJob["batchID"].values[0]) + "-temp"+ str(dfJob["id"].values[0]) +"-response.json", bucketTempName)):
+        return "temp file not exist"
+    bucket = client.get_bucket(bucketTempName)
+    blob = bucket.get_blob(str(dfJob["batchID"].values[0]) + "-temp"+ str(dfJob["id"].values[0]) +"-response.json")
+    json_data = blob.download_as_string()
+    blob.delete()
+    
+    if (not checkGFileExists("files/february/response/" + str(dfJob["batchID"].values[0]) + "-response.json")):
+        print("old file not exist")
+    else:
+        bucket = client.get_bucket(bucketName)
+        blobOld = bucket.get_blob("files/february/response/" + str(dfJob["batchID"].values[0]) + "-response.json")
+        blobOld.delete()
+    
+    dict_t = json.loads(json_data)
+    
+#     df.at[job.index[0], ["Open"]]  = strftime("%H:%M:%S", gmtime(start))
+#     df.at[job.index[0], ["Closed"]]  = strftime("%H:%M:%S", gmtime(end))
+    processRoutedResponse(df, dict_t,session)
+    return "success. . ."
+
+def getTimeWindowFromResponsedict(dict_t : dict, idToFind)->list:
+    for route in dict_t["routes"]:
+        for step in route["steps"]:
+            if(step["type"] == "job"):
+                if(step["job"] == idToFind):
+                    start = step["arrival"]
+                    end = step["arrival"] + step["duration"]
+                    break
+    return start,end
+
+def changeJob(data):
+    from numpy import nan as Nan
+    if(not is_json(data)):
+        return "not json"
+    else:
+        dict_t = json.loads(data)
+        fullDF = pd.read_csv(gStorage)
+        if(fullDF.empty):
+            return "file empty"
+        fullDF = fullDF.loc[(fullDF['Courier Type'] != "NON_GCA5") ]
+        dict_t["PUD Svc Area"] = "KUL"
+        dict_t["PUD Fac"] = "EAC"
+        dict_t["PUD Rte"] = "ACA1"
+        dict_t["PUD Cycle"] = "B"
+        dict_t["Courier id"] = "rafinord"
+        dict_t["Courier Type"] = "NON_GCA5"
+        dict_t["Delivery Type"] = "NORMAL"
+        dict_t["Pickup Type"] = "REGULAR"
+        dict_t["ShpCnt"] = 0
+        dict_t["Pallets Pcs"] = 0
+        dict_t["Parcel Pcs"] = 0
+        dict_t["AR dtm"] = pd.Series([np.nan])
+        dict_t["Act Tm"] = dict_t["Open"]
+#         dict_t["Open"] = "B"
+#         dict_t["Closed"] = "B"
+        dict_t["lat"] = pd.Series([np.nan])
+        dict_t["lgtd"] = pd.Series([np.nan])
+        dict_t["awb_booking"] = "awb_booking" + str(len(fullDF) + 1)
+        dict_t["Act Ckpt Code"] = "PU"
+        dict_t["PuD Type"] = "PU"
+        dict_t["Stop Code"] = 111
+        dict_t["MarkerColor"] = pd.Series([np.nan])
+        dict_t["id"] = str(len(fullDF) + 1)
+        
+        df = pd.DataFrame.from_dict(dict_t)
+#         df = pd.DataFrame.from_records(dict_t, index = [0], columns = fullDF.columns)
+#         print(df.columns)
+#         print(df["PUD Svc Area"])
+    
+        partialDataFrame = fullDF.loc[(fullDF['Courier id'] == "rafinord") & (fullDF["Act Dt"] == int(df["Act Dt"])) & (fullDF["Act Ckpt Code"] == "DEPAR")]
+        fullDF = addRowToDataFrame(partialDataFrame.index[0] + 1, fullDF, df.iloc[0])
+        uploadFile(csvPath, fullDF.to_csv(None, index=False))
+        return "confirm with id " + str(df["id"].values[0])
+def is_json(myjson):
+    try:
+        json_object = json.loads(myjson)
+    except ValueError as e:
+        return False
+    return True
+
+def confirmAddJob(rowID : int):
+        fullDF = pd.read_csv(gStorage)
+        if(fullDF.empty):
+            return "file empty"
+        selectedDF = fullDF.loc[(fullDF["id"].astype(int) == rowID) & (fullDF["Courier Type"] == "NON_GCA5")]
+        if(selectedDF.empty):
+            return "id not found"
+        fullDF.at[selectedDF.index, "Courier Type"] = "DHL Courier" 
+        uploadFile(csvPath, fullDF.to_csv(None, index=False))
+        return True
+
+# getRoutedGeocode(590) 
+# getETAByID(458)
+# 590 690 765 458 455 756 727 758 644
+# dict_t = changeTime(758, "15:30:00", "16:30:00")
+# confirmChangeTime(758)
+# changeJob('{"Customer Name":"FG FAMILY GOLD","Street":"NO.113, JLN KESUMA 4B \\/ 1\\nBDR TASIK KESUMA 40 SELANGOR\\nBERANANG","zip":"43700","City":"BERANANG","Act Dt":20200201,"Act Base":"P","Open":"9:00","Closed":"12:00","Prod Grp":"WPX","Prod Code":"P","Total Pcs":2.0,"Weight":1.78}')
+# confirmAddJob(7588)
+
 import datetime
 
 from flask import Flask, render_template
+from flask import jsonify
+from flask import request
 
 # [START gae_python37_datastore_store_and_fetch_times]
 
@@ -993,6 +1254,56 @@ app = Flask(__name__)
 
 # morningData = tryGotUnassignedInResponse2(date,session,street)
 
+# http://127.0.0.1:8080/getGeo?rowID=680
+@app.route('/getGeo')
+def fun1():
+    rowID = int(request.args.get('rowID'))
+    a,b = getRoutedGeocode(rowID)
+    c = {}
+    c["lat"] = a
+    c["lgtd"] = b
+    j = json.dumps(c)
+    return j
+
+# http://127.0.0.1:8080/getEta?rowID=680
+@app.route('/getEta')
+def fun2():
+    rowID = int(request.args.get('rowID'))
+    return json.dumps(getETAByID(rowID))
+
+# http://127.0.0.1:8080/changeTime?rowID=680&start=15:30:00&end=16:30:00
+@app.route('/changeTime')
+def fun3():
+    rowID = int(request.args.get('rowID'))
+    start = request.args.get('start')
+    end = request.args.get('end')
+    return jsonify(changeTime(rowID, start, end))
+
+# http://127.0.0.1:8080/confirmChangeTime?rowID=680
+@app.route('/confirmChangeTime')
+def fun4():
+    rowID = int(request.args.get('rowID'))
+    return jsonify(confirmChangeTime(rowID))
+
+# http://127.0.0.1:8080/addJob?rowID=680
+
+# example json 
+# {"Customer Name": "FG FAMILY GOLD", "Street": "NO.113, JLN KESUMA 4B \\/ 1\\nBDR TASIK KESUMA 40 SELANGOR\\nBERANANG", "zip": "43700", "City": "BERANANG", "Act Dt": 20200201, "Act Base": "P", "Open": "9:00", "Closed": "12:00", "Prod Grp": "WPX", "Prod Code": "P", "Total Pcs": 2.0, "Weight": 1.78}
+
+# data = {"Customer Name":"FG FAMILY GOLD","Street":"NO.113, JLN KESUMA 4B \\/ 1\\nBDR TASIK KESUMA 40 SELANGOR\\nBERANANG","zip":"43700","City":"BERANANG","Act Dt":20200201,"Act Base":"P","Open":"9:00","Closed":"12:00","Prod Grp":"WPX","Prod Code":"P","Total Pcs":2.0,"Weight":1.78}
+# r = requests.post("http://127.0.0.1:8080/addJob?rowID=680",json=json.dumps(data), headers=headers)
+@app.route('/addJob', methods=['GET', 'POST'])
+def fun5():
+    data = request.json
+    # return data
+    return jsonify(changeJob(data))
+
+
+# http://127.0.0.1:8080/confirmAddJob?rowID=680
+@app.route('/confirmAddJob')
+def fun6():
+    rowID = int(request.args.get('rowID'))
+    return jsonify(confirmAddJob(rowID))
 
 # [START gae_python37_datastore_render_times]
 @app.route('/')
