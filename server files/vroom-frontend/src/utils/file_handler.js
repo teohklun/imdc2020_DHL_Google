@@ -15,6 +15,171 @@ readerGeo.onerror = function(event) {
   alert("File could not be read! Code " + event.target.error.code);
 };
 
+window.loadJsonWithData = function(jData){
+  data = jData;
+  panelControl.hideInitDiv();
+  dataHandler.setData(data);
+  console.log(data);
+  dataHandler.closeAllPopups();
+  dataHandler.checkControls();
+
+  // Plot solution if current file contains one.
+  if (('output' in data) && ('code' in data['output'])) {
+    dataHandler.setSolution(data);
+    solutionHandler.plotSolution();
+  }
+
+  dataHandler.fitView();
+}
+
+window.loadJsonWithData2 = function(jData){
+  var data = jData
+    // dataHandler.setOutput(JSON.parse(event.target.result));
+    
+    var cars = {};
+    var counter = 0;
+    var tasks = {};
+    // jobList.append(Job(x+1,[1],[pickupDeliveryMorning.iloc[x]["lgtd"], pickupDeliveryMorning.iloc[x]["lat"]] , [pickupDeliveryMorning.iloc[x]["zip"]], [] ))
+    var array = JSON.parse(jData);
+    array.routes.forEach(function(route, i) {
+      // console.log(entry);
+      cars[i] = {};
+      cars[i]['id'] = route.vehicle;
+      cars[i]['start'] = route.steps[0]['location'];
+      cars[i]['end'] = route.steps[0]['location'];
+      cars[i]['capacity'] = 99999;
+      cars[i]['time_window'] = [0, 14400]
+      if("name" in route.steps[0]){
+        console.log("received");
+        cars[i]['name'] = route.steps[0].name;
+      }
+      
+      route.steps.forEach(function(job) {
+        // counter = 1;
+        if(job.type == "job") {
+          tasks[counter] = {};
+          if("description" in job){
+            tasks[counter]['description'] = job.description;
+          }
+          tasks[counter]['id'] = job.job;
+          tasks[counter]['delivery'] = [1];
+          tasks[counter]['location'] = job.location;
+          tasks[counter]['service'] = 300;
+          // tasks[counter]["description"] = "some street name";
+          counter ++;
+          // tasks[i]['zip'] = job.location; ignore zip
+        }
+      });
+      // console.log(route);
+
+      // console.log(route.steps);
+    });
+
+    console.log("after 1");
+    // tasks[]['id'] = 1;
+    console.log(array);
+    console.log("after 2");
+
+    console.log("after setouput");
+
+    var combinedData = {};
+
+    console.log(counter);
+    // var arr = [];
+    for (var i = 0; i < array.unassigned.length; i++) {
+        tasks[counter] = {};
+        tasks[counter]['id'] = array.unassigned[i].id ;
+        tasks[counter]['delivery'] = [1] ;
+        tasks[counter]['location'] = array.unassigned[i].location ;
+        tasks[counter]['service'] = 300 ;
+        counter++;
+    }
+
+    console.log("arr");
+    
+    var arr2 = Object.keys(cars).map(function(k) { return cars[k] });
+    var arr3 = Object.keys(tasks).map(function(k) { return tasks[k] });
+    // var arr4 = Object.keys(array.unassigned).map(function(k) { return array.unassigned[k] });
+    
+    var routes = array.routes;
+
+    combinedData['vehicles'] = arr2;
+    combinedData['jobs'] = arr3;
+    combinedData['routes'] = routes;
+    // combinedData['unassigned'] = arr4;
+
+    combinedData['summary'] = array['summary'];
+
+    var inputData={};
+    inputData["vehicles"] = arr2;
+    inputData["jobs"] = arr3;
+
+    // console.log(JSON.parse(combinedData));
+
+    var arr = [];
+    // for (var i = 0; i < combinedData.length; i++) {
+    //     arr.push(combinedData[i].name);
+    // }
+    arr.push(combinedData["vehicles"]);
+    arr.push(combinedData["jobs"]);
+    // arr.push(combinedData[i].name);
+
+    console.log("dasdas");
+
+    // var a = JSON.parse(combinedData);
+
+    panelControl.hideInitDiv();
+
+    // if (('output' in data) && ('code' in data['output'])) {
+    //   dataHandler.setSolution(data);
+    //   solutionHandler.plotSolution();
+    // }
+
+    dataHandler.setData(inputData);
+    console.log("after set");
+    dataHandler.setOutput(JSON.parse(jData));
+    // dataHandler.setOutput(combinedData);
+
+    // console.log("to print output . . .");
+    // console.log(dataHandler.getOutput());
+    dataHandler.closeAllPopups();
+    dataHandler.checkControls();
+    dataHandler.fitView();
+    //console.log(dataHandler.getOutput);
+
+    // dataHandler.setSolution(JSON.parse(event.target.result));
+    // solutionHandler.plotSolution();
+
+    console.log("start plot");
+
+    var result = combinedData;
+    // console.log(result);
+    // if (result['code'] !== 0) {
+    //   console.log("error");
+    //   alert(result['error']);
+    //   return;
+    // }
+    // console.log("start plot2");
+    // console.log(result.unassigned);
+    // console.log(result.routes);
+  
+    // console.log(result);
+    dataHandler.markUnassigned(result.unassigned);
+    console.log("1");
+  
+    // dataHandler.addGeometries(result.routes);
+    // console.log("geometries");
+  
+    dataHandler.addRoutes(routes);
+    console.log("2");
+  
+    dataHandler.checkControls();
+    console.log("3");
+
+    var summaryControl = require('../controls/summary');
+    summaryControl.update(result);
+}
+
 readerGeo.onload = function(event) {
   // We first try parsing the input to determine if the file contains
   // a valid json object with the expected keys.
@@ -330,6 +495,8 @@ var setGeoFile = function() {
 
 module.exports = {
   setFile: setFile,
-  setGeoFile: setGeoFile
+  setGeoFile: setGeoFile,
+  loadJsonWithData: loadJsonWithData,
+  loadJsonWithData2: loadJsonWithData2
 };
 

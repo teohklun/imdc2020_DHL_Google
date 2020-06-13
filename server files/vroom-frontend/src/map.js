@@ -9,6 +9,10 @@ var address = require('./utils/address');
 var fileHandler = require('./utils/file_handler');
 var solutionHandler = require('./utils/solution_handler');
 
+window.x = function(){
+  console.log("hello window function");
+}
+
 panelControl.addTo(LSetup.map);
 collapseControl.addTo(LSetup.map);
 fileHandler.setFile();

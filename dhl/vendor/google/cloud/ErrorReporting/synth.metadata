@@ -1,0 +1,37 @@
+{
+  "sources": [
+    {
+      "git": {
+        "name": ".",
+        "remote": "https://github.com/googleapis/google-cloud-php.git",
+        "sha": "e2a37c90d30bb5bc02e5a783cd89b6ee11e1b84f"
+      }
+    },
+    {
+      "git": {
+        "name": "googleapis",
+        "remote": "https://github.com/googleapis/googleapis.git",
+        "sha": "8f41c697c67d357665ce9afac18793c8f80ac73c",
+        "internalRef": "314787285"
+      }
+    },
+    {
+      "git": {
+        "name": "synthtool",
+        "remote": "https://github.com/googleapis/synthtool.git",
+        "sha": "95586c36f1c85b5e142909e499a568a9b0d0f0bf"
+      }
+    }
+  ],
+  "destinations": [
+    {
+      "client": {
+        "source": "googleapis",
+        "apiName": "clouderrorreporting",
+        "apiVersion": "v1beta1",
+        "language": "php",
+        "generator": "bazel"
+      }
+    }
+  ]
+}

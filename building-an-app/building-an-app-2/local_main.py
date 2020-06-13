@@ -1323,8 +1323,6 @@ def getRoute(batchID):
     dfLocal = dfLocal.loc[dfLocal["batchID"].isin(batchID)]
 #     dfLocal = dfLocal.loc[dfLocal["duration"]]
 
-
-
 def getVehicle(courierID = None, date=None, action=None, s=None,weekDay=None, perDay=None):
     dfLocal = dfReturn.copy()
     dfLocal["Act Dt"] = pd.to_datetime(dfReturn["Act Dt"], format='%Y%m%d')
@@ -1399,7 +1397,7 @@ app = Flask(__name__)
 # [START gae_python37_datastore_store_and_fetch_times]'
 @app.route('/')
 def test12312():
-    return "hello"
+    return "hellohello"
 
 @app.route('/test', methods=["POST"])
 def test():
@@ -1410,7 +1408,6 @@ def test():
         print(date)    
     if("session" in json):
         session = json["session"]
-
 
     return "Asds"
 

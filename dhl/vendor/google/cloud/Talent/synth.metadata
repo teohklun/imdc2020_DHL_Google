@@ -1,0 +1,37 @@
+{
+  "sources": [
+    {
+      "git": {
+        "name": ".",
+        "remote": "https://github.com/googleapis/google-cloud-php.git",
+        "sha": "e2a37c90d30bb5bc02e5a783cd89b6ee11e1b84f"
+      }
+    },
+    {
+      "git": {
+        "name": "googleapis",
+        "remote": "https://github.com/googleapis/googleapis.git",
+        "sha": "8070bcb140b06991a636d4ba7d665c5adab1675d",
+        "internalRef": "314792023"
+      }
+    },
+    {
+      "git": {
+        "name": "synthtool",
+        "remote": "https://github.com/googleapis/synthtool.git",
+        "sha": "973fec811e9203b4c147121a26f1484841c465fd"
+      }
+    }
+  ],
+  "destinations": [
+    {
+      "client": {
+        "source": "googleapis",
+        "apiName": "talent",
+        "apiVersion": "v4beta1",
+        "language": "php",
+        "generator": "bazel"
+      }
+    }
+  ]
+}

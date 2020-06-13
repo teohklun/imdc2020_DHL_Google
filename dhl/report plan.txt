@@ -1,0 +1,40 @@
+unique courier id + unique date + count job -> job complete by every vehicle man (bar chart)
+
+single date + multi courier id + count job -> courier parcel for that day * (bar chart)
+single date + singel courier -> parcel for that day (summary)
+
+
+date + job -> total job a day (summary)
+date(multiple) + job _> job x day 
+
+date + act base (summary)
+date(month) + act base (summary)
+date(year) _ act base (summary)
+
+date + count(not arrival in time)
+
+date + duration travel -> duration of the optimal route *\
+date + vehicle + duration travel -> duration of that single route
+
+arrival time (m) + day + time range()
+arrival time(a) + day + time range()
+
+arrival time (m) + month+ time range()
+arrival time(a) + month+ time range()
+
+select date + session -> route
+select date + session + driver -> single route
+
+optimal route
+.. generate optimal route
+.. view optimal route
+  .. retrieve date
+   if mode day
+   .. dateOnChange -> get available session, vehicle ids
+      .. go bucket find all file start with date X,
+       then wait for full input
+       .. check file exist -> no return false
+         .. if got, return json data, send to the webpage
+   if mode person
+	
+

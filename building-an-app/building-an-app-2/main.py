@@ -41,6 +41,8 @@ import requests
 from typing import Dict, Tuple, Sequence, List, Any
 # import polyline
 
+from datetime import date, timedelta
+
 import json
 
 import pprint
@@ -238,6 +240,8 @@ def getMiliSec(time_str: float) -> int:
     if(len(time_str.split(':')) ==3  ):
         h, m,s = time_str.split(':')
     else:
+        print(len(time_str.split(':')))
+        print(time_str)
         h, m = time_str.split(':')
         s= "00"
     
@@ -670,7 +674,7 @@ def getLocationsAscendingFromRoute(routes : dict, index :int):
         locations.append(step["location"])
     return locations
 
-def getRouteDetailWithID(ID):
+def getRouteDetailWithIDk(ID):
     readed = getResponseFileAsDict()    
     indexStep, indexRoute = getRouteIndexWithID(readed, ID)
     if(indexStep == [] or indexRoute == []) :
@@ -720,7 +724,7 @@ def getResponseFileAsDict():
     import ndjson
     client = storage.Client()
     bucket = client.get_bucket(bucketName)
-    blob = bucket.get_blob(getResponseFileName(date,session))
+    blob = bucket.get_blob(getResponseFileName(date,session))s
     json_data_bytes = blob.download_as_string()
     dict_t = json.loads(json_data_bytes)
     return dict_t
@@ -1068,6 +1072,7 @@ def changeTime(rowID : int, start: str, end : str ) -> list:
         print ("Error request code : ")
         print(r.status_code)
         print(r.content)
+        return "routing server error"
     
     else:
         dict_t = json.loads(r.content)
@@ -1232,29 +1237,171 @@ def confirmAddJob(rowID : int):
         uploadFile(csvPath, fullDF.to_csv(None, index=False))
         return True
 
-# getRoutedGeocode(590) 
-# getETAByID(458)
-# 590 690 765 458 455 756 727 758 644
-# dict_t = changeTime(758, "15:30:00", "16:30:00")
-# confirmChangeTime(758)
-# changeJob('{"Customer Name":"FG FAMILY GOLD","Street":"NO.113, JLN KESUMA 4B \\/ 1\\nBDR TASIK KESUMA 40 SELANGOR\\nBERANANG","zip":"43700","City":"BERANANG","Act Dt":20200201,"Act Base":"P","Open":"9:00","Closed":"12:00","Prod Grp":"WPX","Prod Code":"P","Total Pcs":2.0,"Weight":1.78}')
-# confirmAddJob(7588)
+client = storage.Client()
+bucket = client.get_bucket(bucketName)
+fullDataFrame = pd.read_csv(gStorageOptimalCsv)
 
-import datetime
+client = storage.Client()
+bucket = client.get_bucket(bucketName)
+fullDataFrame = pd.read_csv(gStorageOptimalCsv)
+from numpy import nan as Nan
+fullDataFrame
+fullDataFrame['Act Tm'] = pd.to_datetime(fullDataFrame['Act Tm'])
+fullDataFrame['Act Tm'] = [time.time() for time in fullDataFrame['Act Tm']]
+time = datetime.datetime.strptime(morningStart, '%H:%M:%S').time()
+time2 = datetime.datetime.strptime(morningEnd, '%H:%M:%S').time()
+maskVehicle = (fullDataFrame["Act Ckpt Code"] == "DEPAR") | (fullDataFrame["Act Ckpt Code"] == "ARRVD")
+tasks = fullDataFrame.loc[~ (maskVehicle)]
+# print(tasks)
+
+dfVehicle = fullDataFrame.loc[maskVehicle]
+dateList = [20200201]
+dfXDayVehicle = dfVehicle.loc[dfVehicle["Act Dt"].astype(int).isin(dateList)]
+
+# dateDF = pd.to_datetime(fullDataFrame["Act Dt"], format='%Y%m%d')
+fullDataFrame["Act Dt"] = pd.to_datetime(fullDataFrame["Act Dt"], format='%Y%m%d')
+dateDF = fullDataFrame.groupby(fullDataFrame['Act Dt'].dt.weekday_name)["id"].nunique()
+dayDF = fullDataFrame.groupby(fullDataFrame['Act Dt'].dt.day)["id"].nunique()
+
+sessionMMask = ((tasks['Act Tm'] >= time) & (tasks['Act Tm'] <= time2)) 
+sessionMMask.value_counts()
+
+morning = tasks.loc[sessionMMask]
+afternoon = tasks.loc[~sessionMMask]
+
+type(dayDF.astype(int))
+dayDF.astype(int)[1]
+
+client = storage.Client()
+bucket = client.get_bucket(bucketName)
+dfReturn = pd.read_csv(gStorageOptimalCsv)
+
+morningSSec = datetime.datetime.strptime(morningStart, '%H:%M:%S').time()
+morningESec = datetime.datetime.strptime(morningEnd, '%H:%M:%S').time()
+afternoonSSec = datetime.datetime.strptime(afternoonStart, '%H:%M:%S').time()
+afternoonESec = datetime.datetime.strptime(afternoonEnd, '%H:%M:%S').time()
+
+#vehicle
+def getVehicleInMonth(month = 2):
+    maskVehicle = (dfReturn["Act Ckpt Code"] == "DEPAR") | (fullDataFrame["Act Ckpt Code"] == "ARRVD")
+    dfVehicle = dfReturn.loc[maskVehicle]
+    return len(dfVehicle)
+
+def getVehicleDateInMonth(date,month =2):
+    maskVehicle = (dfReturn["Act Ckpt Code"] == "DEPAR") | (fullDataFrame["Act Ckpt Code"] == "ARRVD")
+    dfVehicle = dfReturn.loc[(maskVehicle) & (dfReturn["Act Dt"].astype(int) == int(date)) ]
+    return len(dfVehicle)
+
+def getVehicleDateSessionInMonth(date,session,month = 2):
+    dfLocal = dfReturn.copy()
+    maskVehicle = (dfLocal["Act Ckpt Code"] == "DEPAR") | (dfLocal["Act Ckpt Code"] == "ARRVD")
+    dfLocal['Act Tm'] = pd.to_datetime(dfLocal['Act Tm'])
+    dfLocal['Act Tm'] = [time.time() for time in dfLocal['Act Tm']]
+    dfLocal = dfLocal.loc[(maskVehicle) & (dfLocal["Act Dt"].astype(int).isin(date))]
+    if(session=="m"):
+        dfVehicle = dfVehicle.loc[(dfVehicle["Act Tm"] >= morningSSec) & (dfVehicle["Act Tm"] <= morningESec)]
+    elif(session=="a"):
+        dfVehicle = dfVehicle.loc[(dfVehicle["Act Tm"] >= afternoonSSec) &(dfVehicle["Act Tm"] <= afternoonESec)]
+    else:
+        return "not prepared session"
+                                  
+    return len(dfVehicle)
+
+#get routeIDS
+def getBatchID():
+    dfLocal = dfReturn.copy()
+    dfLocal = dfLocal["batchID"].unique()
+#     print(type(list(dfLocal)))
+    dict_t = {}
+    for item in list(dfLocal):
+        dict_t[item] = item
+    return json.dumps(dict_t)
+#     print(dfLocal)
+    return dfLocal.to_json()
+
+def getRoute(batchID):
+    dfLocal = dfReturn.copy()
+    dfLocal = dfLocal.loc[dfLocal["batchID"].isin(batchID)]
+#     dfLocal = dfLocal.loc[dfLocal["duration"]]
+
+
+
+def getVehicle(courierID = None, date=None, action=None, s=None,weekDay=None, perDay=None):
+    dfLocal = dfReturn.copy()
+    dfLocal["Act Dt"] = pd.to_datetime(dfReturn["Act Dt"], format='%Y%m%d')
+    maskVehicle = (dfLocal["Act Ckpt Code"] == "DEPAR") | (dfLocal["Act Ckpt Code"] == "ARRVD")
+    dfLocal = dfLocal.loc[maskVehicle]
+    if(courierID):
+        dfLocal.loc[dfLocal["Courier id"].isin(courierID)]
+    if(action):
+        dfLocal.loc[dfLocal["Act Base"] == action]
+    if(date):
+        dfLocal.loc[dfLocal["Act Dt"].isin(date)]
+    if(s):
+        dfLocal['Act Tm'] = pd.to_datetime(dfLocal['Act Tm'])
+        dfLocal['Act Tm'] = [time.time() for time in dfLocal['Act Tm']]
+        if(s=="m"):
+            dfLocal = dfLocal.loc[(dfLocal["Act Tm"] >= morningSSec) & (dfLocal["Act Tm"] <= morningESec)]
+        elif(s=="a"):
+            dfLocal = dfLocal.loc[(dfLocal["Act Tm"] >= afternoonSSec) &(dfLocal["Act Tm"] <= afternoonESec)]
+        else:
+            return "not prepared session"
+    if(weekDay):
+        dfLocal = dfLocal.groupby(dfLocal['Act Dt'].dt.weekday_name)["id"].nunique()
+        return dfLocal.to_json()
+    if(perDay):
+        dfLocal = dfLocal.groupby(dfLocal['Act Dt'].dt.day)["id"].nunique()
+        return dfLocal.to_json()
+    return len(dfLocal)
+
+def getJob(date=None, action=None, s=None, mode="weekDay"):
+    client = storage.Client()
+    bucket = client.get_bucket(bucketName)
+    dfReturn = pd.read_csv(gStorageOptimalCsv)
+    # date = pd.to_datetime(date)
+    dfLocal = dfReturn.copy()
+    # dfLocal["Act Dt"] = pd.to_datetime(dfReturn["Act Dt"], format='%Y%m%d')
+    maskVehicle = (dfLocal["Act Ckpt Code"] == "DEPAR") | (dfLocal["Act Ckpt Code"] == "ARRVD")
+    dfLocal = dfLocal.loc[~maskVehicle]
+    if(action):
+        dfLocal = dfLocal.loc[dfLocal["Act Base"] == action]
+    if(date):
+        dfLocal = dfLocal.loc[dfLocal["Act Dt"].isin(date)]
+    if(s):
+        dfLocal['Act Tm'] = pd.to_datetime(dfLocal['Act Tm'])
+        dfLocal['Act Tm'] = [time.time() for time in dfLocal['Act Tm']]
+        if(s=="m"):
+            dfLocal = dfLocal.loc[(dfLocal["Act Tm"] >= morningSSec) & (dfLocal["Act Tm"] <= morningESec)]
+        elif(s=="a"):
+            dfLocal = dfLocal.loc[(dfLocal["Act Tm"] >= afternoonSSec) &(dfLocal["Act Tm"] <= afternoonESec)]
+        else:
+            return "not prepared session"
+    dfLocal["Act Dt"] = pd.to_datetime(dfReturn["Act Dt"], format='%Y%m%d')
+    if(mode == "weekday"):
+        days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday', 'Sunday']
+        if (dfLocal.empty):
+            print("HASDASDASDASDASDS")
+        dfLocal = dfLocal.groupby(dfLocal['Act Dt'].dt.weekday_name)["id"].nunique().reindex(days)
+
+        return dfLocal.to_json()
+    if(mode == "day"):
+        dfLocal = dfLocal.groupby(dfLocal['Act Dt'].dt.day)["id"].nunique()
+        return dfLocal.to_json()
+    return len(dfLocal)
+#action
+def getJobInAction():
+    return []
 
 from flask import Flask, render_template
 from flask import jsonify
 from flask import request
-
-# [START gae_python37_datastore_store_and_fetch_times]
-
-
-# [END gae_python37_datastore_store_and_fetch_times]
 app = Flask(__name__)
 
-# morningData = tryGotUnassignedInResponse2(date,session,street)
+# [START gae_python37_datastore_store_and_fetch_times]'
+@app.route('/')
+def test12312():
+    return "hello"
 
-# http://127.0.0.1:8080/getGeo?rowID=680
 @app.route('/getGeo')
 def fun1():
     rowID = int(request.args.get('rowID'))
@@ -1305,76 +1452,64 @@ def fun6():
     rowID = int(request.args.get('rowID'))
     return jsonify(confirmAddJob(rowID))
 
-# [START gae_python37_datastore_render_times]
-@app.route('/')
-def start():
-    # morningData = tryGotUnassignedInResponse(date,session,street)
-    print("start")
-    return "Hello"
-# def root():
-
-@app.route('/try')
-def tryReturn():
-    # date = "20200204"
-    # session = "m"
-    # street = "Jalan Rumbia, Kampung Seberang Paya, 11900 Bayan Lepas, Pulau Pinang"
-# example
-# http://127.0.0.1:8080/try?date=20200204&session=m&street=Bj%20Court%20Condominium,%20Kampung%20Seberang%20Paya,%2011900%20Bayan%20Lepas,%20Pulau%20Pinang
-    from flask import request
-    date  = request.args.get('date')
-    session = request.args.get('session')
-    street = request.args.get('street')
-
-    # street = "Bj Court Condominium, Kampung Seberang Paya, 11900 Bayan Lepas, Pulau Pinang"
-    morningData = tryGotUnassignedInResponse2(date,session,street)
-    return morningData
-    # print(type(date))
-    # return street
-
-# [END gae_python37_datastore_render_times]
+@app.route('/test', methods=["POST"])
+def test():
+    json = request.json
+    print(json["date-multi"])
+    if("date" in json):
+        date = json["date"]
+        print(date)    
+    if("session" in json):
+        session = json["session"]
 
 
-@app.route('/openFile')
-def openFile():
-    from flask import Flask
-    from io import StringIO
-    from flask import jsonify
-    client = storage.Client()
-    bucket = client.get_bucket('real-bucket-dhl')
-    
-    blob = bucket.get_blob('3.csv')
-    your_file_contents = blob.download_as_string()
+    return "Asds"
 
-    # df = pd.read_csv(StringIO(your_file_contents))
-    df = pd.read_csv('gs://real-bucket-dhl/3.csv')
+@app.route('/job', methods=["POST"])
+def test2():
+    json = request.json
+    print(json)
+    if("date-range-type" in json):
+        if(json["date-range-type"] == "range"):
+            date = json["date-range"]
+            start, end = date.split(" - ")
 
-    # fullDataFrame = pd.read_csv(blob)
-    # return your_file_contents
-    # print(df.iloc[0]["Courier id"])
+            start = datetime.datetime.strptime(start, '%Y-%m-%d').date()
+            end = datetime.datetime.strptime(end, '%Y-%m-%d').date()
 
-    return jsonify(df.iloc[0]["Courier id"])
+            delta = end - start       # as timedelta
+            dates = []
 
-@app.route('/uploadfile')
-def upload_blob():
-    client = storage.Client()
-    bucket = client.get_bucket("real-bucket-dhl")
-    
-    # fullDataFrame = pd.read_csv(csvPath)
-    df = pd.read_csv('gs://real-bucket-dhl/3.csv')
-    string = df.to_csv(None, index=False)
+            for i in range(delta.days + 1):
+                day = start + timedelta(days=i)
+                day = day.strftime('%Y%m%d')
+                dates.append(day)
+ 
+            # build list date from this variable
+        elif(json["date-range-type"] == "multi"):
+            print("multi")
 
-    blob = bucket.blob("3.csv")
-
-    blob.upload_from_string(string, "application/vnd.ms-excel")
-
-@app.route('/test')
-def another_function():
-
-    from flask import request
-    a  = request.args.get('first')
-    b = request.args.get('second')
-    return a + b
-
+            date = json["date-multi"]
+            arr = date.split(", ")
+            if(len(arr) == 1):
+                dates = json["date-multi"]
+                # dates = datetime.datetime.strptime(dates, '%Y-%m-%d').date()
+                dates = [dates.replace("-", "")]
+            else:
+                dates = [day.replace('-','') for day in arr]
+                # dates = [datetime.datetime.strptime(day, '%Y-%m-%d').date() for day in arr]
+            # print(dates)
+    if("session" in json):
+        session = json["session"]
+    if("action" in json):
+        action = json["action"]
+    if("mode" in json):
+        mode = json["mode"]
+    # print(getJob(dates, action, session, mode))
+    toReturn = getJob(dates, action, session, mode)
+    return toReturn
+    # return "adas"
+# [END gae_python37_datastore_store_and_fetch_times]
 
 if __name__ == '__main__':
     # This is used when running locally only. When deploying to Google App
@@ -1385,4 +1520,4 @@ if __name__ == '__main__':
     # the "static" directory. See:
     # http://flask.pocoo.org/docs/1.0/quickstart/#static-files. Once deployed,
     # App Engine itself will serve those files as configured in app.yaml.
-    app.run(host='127.0.0.1', port=8080, debug=True)
+    app.run(host='127.0.0.1', port=8007, debug=True)
