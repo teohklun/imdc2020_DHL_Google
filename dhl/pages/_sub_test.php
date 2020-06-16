@@ -86,27 +86,36 @@
 				                  <label for="mode2">Week Day Mode</label>
 				              </div>
 				              <div class="radio icheck-peterriver">
-				                  <input <?= isset($_POST["form1"]) ? $_POST["mode"] == "day" ? "checked" : ""  : "" ?> type="radio" value="day" id="mode3" name="mode">
-				                  <label for="mode3">Day mode</label>
+				                  <input <?= isset($_POST["form1"]) ? $_POST["mode"] == "month" ? "checked" : ""  : "" ?> type="radio" value="month" id="mode3" name="mode">
+				                  <label for="mode3">Monthly mode</label>
+				              </div>
+				         			<div class="radio icheck-peterriver">
+				                  <input <?= isset($_POST["form1"]) ? $_POST["mode"] == "day" ? "checked" : ""  : "" ?> type="radio" value="day" id="mode4" name="mode">
+				                  <label for="mode4">Day mode</label>
 				              </div>
 				            </div>
 				            <div class="col-md-1 col-sm-1 col-xs-1"></div>
 			          	</div>
+			<div class="col-md-6 mb-3">
+			 <label for="time"><span class="text-info">Time</span></label>
+        <input class="form-control timepicker" type="text" name="StartTime" id="timepicker1"  value="">
+      </div>
 								<div class="col-md-1 col-sm-1 col-xs-1 align-self-center">
 			            <input class="btn btn-primary" type="submit" name="form1" value="Submit" style="margin-bottom: 20px" >
 								</div>
 						</div>
 	    	</form>
 
-          <div class="card-header ">
-              <h4 class="card-title">Email Statistics</h4>
-              <p class="card-category">Last Campaign Performance</p>
+          <div class="card-header " style="text-align-last: center";>
+              <h4 class="card-title">Job(s) in <?= isset($input) ? $input["mode"] == "weekday" ? "Weekday" : "Days" : "Example"?> </h4>
           </div>
           <div class="card-body ">
             <div id="chart-line-1" class="ct-chart ct-golden-section"></div>
             <div class="legend">
                 <i class="fa fa-circle text-info"></i> 
-                <?= isset($input) ? $input["mode"] == "weekday" ? "Weekday" : "Days" : "Example"?>
+                <?= isset($input) ? $input["mode"] == "weekday" ? $input["mode"] == "month" ? "Month" : "Weekday" : "Days" : "Example"?>
+              </br>
+                <span class="text-danger"><?= isset($error) ? $message : "" ?></span>
             </div>
             <hr>
             <div class="stats">

@@ -5,13 +5,14 @@
                     </a>
                 </div>
                 <ul class="nav">
-                    <li class="nav-item active">
+                    <li class= "<?= $_SERVER['SCRIPT_NAME'] == "/dhl/pages/test.php" ? 'nav-item active' : "" ?>">
                         <a class="nav-link" href="test.php">
                             <i class="nc-icon nc-chart-pie-35"></i>
                             <p>Dashboard</p>
                         </a>
                     </li>
-                    <li>
+                    <li class= "<?= in_array($_SERVER['SCRIPT_NAME'], ["/dhl/pages/optimalRoute.php", "/dhl/pages/createOptimalRoute.php", "/dhl/pages/multiR.php", "/dhl/pages/singleR.php"]) ? "nav-item active" : "" ?>" >
+
                         <a class="nav-link" href="optimalRoute.php">
                             <i class="nc-icon nc-chart-pie-35"></i>
                             <p>Optimal route</p>

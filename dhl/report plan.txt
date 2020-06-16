@@ -10,7 +10,7 @@ date(multiple) + job _> job x day
 date + act base (summary)
 date(month) + act base (summary)
 date(year) _ act base (summary)
-
+`
 date + count(not arrival in time)
 
 date + duration travel -> duration of the optimal route *\
@@ -35,6 +35,9 @@ optimal route
        then wait for full input
        .. check file exist -> no return false
          .. if got, return json data, send to the webpage
-   if mode person
-	
+   if mode per
 
+single date/date/session/json
+single date/date/session/csv
+single route/date/session/id/json
+single route/date/session/id/csv

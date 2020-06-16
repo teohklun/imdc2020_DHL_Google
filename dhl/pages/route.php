@@ -2,32 +2,50 @@
   require '../vendor/autoload.php';
   use Google\Cloud\Core\ServiceBuilder;
 
-  $gcloud = new ServiceBuilder([
-      'keyFilePath' => 'gjson.json',
-      'projectId' => 'supple-folder-256709'
-  ]);
 
-  $storage = $gcloud->storage();
 
-  
-  $mode = "";
-  $session = "a";
-  $date = "a";
-  $routeID = "a";
-  $fileName = "";
+  if($_POST){
+    $mode = $_POST["mode"];
+    if($mode === "singe-date") {
+      $fileName = $_POST["fileName"];
+      
+      $gcloud = new ServiceBuilder([
+          'keyFilePath' => 'gjson.json',
+          'projectId' => 'supple-folder-256709'
+      ]);
 
-  $bucket = $storage->bucket('real-bucket-dhl');
-  $json = Null;
-  if(!$bucket){
-    #show no bucket not exist
-  } else {
-    $object = $bucket->object('testing1.json');
-    if(!$object) {
-      #show file no exist
+      $storage = $gcloud->storage();
+      
+      $mode = "";
+      $session = "a";
+      $date = "a";
+      $routeID = "a";
+      // $fileName = "";
+
+      $bucket = $storage->bucket('real-bucket-dhl');
+      $json = Null;
+      if(!$bucket){
+        #show no bucket not exist
+      } else {
+        $object = $bucket->object($fileName);
+        if(!$object) {
+          print_r("object not exist");
+          #show file no exist
+        } else {
+          $json = $object->downloadAsString();
+        }
+      }
     } else {
-      $json = $object->downloadAsString();
+      print_r("some parameter missing");
+      die;
     }
+
+  }else{
+    print_r(($_POST));
+    print_r("Webpage not support entered with non-post method.");
+    die;
   }
+
 
   // $blob = $bucket.get_blob("testing1.json ");
 
