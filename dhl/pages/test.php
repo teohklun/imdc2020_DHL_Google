@@ -6,6 +6,9 @@ include_once "../utility/packed_library.php";
 <body>
 
 <?php 
+
+$driver = curl_post($url . "/getDriverList");
+
 // print_r($_POST);
 if(!empty($_POST)){
     if(isset($_POST["form1"])) {
@@ -72,6 +75,8 @@ if(!empty($_POST)){
         // demo.showNotification();
     });
 </script>
+<script type="text/javascript" src="<?= ASSET_JS_PLUGIN ?>/select2.js"></script>
+<link href="<?= ASSET_CSS ?>/select2.css" rel="stylesheet">
 <script type="text/javascript" src="<?= ASSET_JS_PLUGIN ?>/daterangepicker.js"></script>
 <script type="text/javascript" src="<?= ASSET_JS_CUSTOM ?>/daterange.js"></script>
 <script type="text/javascript" src="<?= ASSET_JS_PLUGIN ?>/multidate.picker.js"></script>

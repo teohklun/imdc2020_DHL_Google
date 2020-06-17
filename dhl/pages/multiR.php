@@ -1,7 +1,6 @@
 <?php 
   include_once "../utility/packed_library.php";
 
-  require '../vendor/autoload.php';
   use Google\Cloud\Core\ServiceBuilder;
 
   $gcloud = new ServiceBuilder([
@@ -10,13 +9,6 @@
   ]);
 
   $storage = $gcloud->storage();
-
-  
-  $mode = "";
-  $session = "a";
-  $date = "a";
-  $routeID = "a";
-  $fileName = "";
 
   $bucket = $storage->bucket('real-bucket-dhl');
   $json = Null;
@@ -43,9 +35,9 @@
         // print_r($value->name());
         $string = $value->name();
 
-        $fileName = split("/", $string);
+        $fileName = explode("/", $string);
         $label = $fileName[1] . "/" . $fileName[2];
-        $fileName = split("\\.", end($fileName));
+        $fileName = explode(".", end($fileName));
         // print_r("</br>");
         // print_r($a); 
         if($fileName[0] == "input") {

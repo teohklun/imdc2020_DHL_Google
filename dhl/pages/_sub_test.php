@@ -96,10 +96,22 @@
 				            </div>
 				            <div class="col-md-1 col-sm-1 col-xs-1"></div>
 			          	</div>
-			<div class="col-md-6 mb-3">
-			 <label for="time"><span class="text-info">Time</span></label>
-        <input class="form-control timepicker" type="text" name="StartTime" id="timepicker1"  value="">
-      </div>
+			          	<div class="container">
+				          	<div class="row">
+											<div class="col-md-6 mb-3">
+											 <label for="time"><span class="text-info">Time</span></label>
+								        <input class="form-control timepicker" type="text" name="StartTime" id="timepicker1"  value="">
+								      </div>
+								      <div class="col-md-6 mb-3">
+											 <label for="driver"><span class="text-info">Driver Name</span></label>
+											  <select class="select2 form-control" name="states[]"  multiple="multiple">
+									        <?php foreach($driver as $key => $value): ?>
+									          <<?= "option value = ". $key ?>> <?= $value ?> </option>
+									        <?php endforeach; ?> 
+												</select>
+								      </div>
+								    </div>
+								  </div>
 								<div class="col-md-1 col-sm-1 col-xs-1 align-self-center">
 			            <input class="btn btn-primary" type="submit" name="form1" value="Submit" style="margin-bottom: 20px" >
 								</div>
@@ -127,3 +139,8 @@
 	    </div>
 	</div>
 </div>
+<script>
+	$(document).ready(function() {
+    $('.select2').select2();
+});
+</script>

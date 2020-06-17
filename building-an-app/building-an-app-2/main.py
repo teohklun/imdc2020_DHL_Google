@@ -1372,6 +1372,13 @@ def getJob(date=None, action=None, s=None, mode="weekDay"):
         else:
             return "not prepared session"
     dfLocal["Act Dt"] = pd.to_datetime(dfReturn["Act Dt"], format='%Y%m%d')
+
+    if(time):
+        dfLocal = dfLocal.loc[dfLocal["Act Dt"].isin(date)]
+
+    if(name):
+        dfLocal = dfLocal.loc[dfLocal["Courier id"].isin(name)]
+
     if(mode == "weekday"):
         days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday', 'Sunday']
         if (dfLocal.empty):
@@ -1379,10 +1386,10 @@ def getJob(date=None, action=None, s=None, mode="weekDay"):
         dfLocal = dfLocal.groupby(dfLocal['Act Dt'].dt.weekday_name)["id"].nunique().reindex(days)
 
         return dfLocal.to_json()
-    if(mode == "month"):
+    elif(mode == "month"):
         dfLocal = dfLocal.groupby(dfLocal['Act Dt'].dt.day)["id"].nunique()
         return dfLocal.to_json()
-    if(mode == "day"):
+    elif(mode == "day"):
         if(not dfLocal.empty):
             dfLocal["Act Tm2"] = pd.to_timedelta(dfLocal["Act Tm2"])
             dfLocal.index = dfLocal["Act Tm2"]
@@ -1401,7 +1408,7 @@ def getDriverNameList():
     bucket = client.get_bucket(bucketName)
     fullDataFrame = pd.read_csv(gStorageOptimalCsv)
 
-    driverDataFrame = fullDataFrame.loc["Courier id"].unique()
+    driverDataFrame = fullDataFrame["Courier id"].unique()
     driverArray = list(driverDataFrame)
     return driverArray
 
@@ -1539,7 +1546,7 @@ def fun7():
 
     return jsonify(tryGotUnassignedInResponse2(str(date),  session))
 
-@app.route('/getDriverList')
+@app.route('/getDriverList', methods=["POST", "GET"])
 def fun8():
     return jsonify(getDriverNameList()) 
 

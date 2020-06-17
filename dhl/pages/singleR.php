@@ -1,7 +1,6 @@
 <?php 
   include_once "../utility/packed_library.php";
 
-  require '../vendor/autoload.php';
   use Google\Cloud\Core\ServiceBuilder;
 
   $gcloud = new ServiceBuilder([
@@ -10,13 +9,6 @@
   ]);
 
   $storage = $gcloud->storage();
-
-  
-  $mode = "";
-  $session = "a";
-  $date = "a";
-  $routeID = "a";
-  $fileName = "";
 
   $bucket = $storage->bucket('real-bucket-dhl');
   $json = Null;
@@ -35,8 +27,8 @@
       $selectionList = [];
       foreach ($object as $key => $value) {
         $string = $value->name();
-        $label = split("/", $string);
-        $a = split("\\.", $string);
+        $label = explode("/", $string);
+        $a = explode(".", $string);
         // print_r("</br>");
         // print_r($a);
         if($a[1] == "csv") {
