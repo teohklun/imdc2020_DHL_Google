@@ -10,13 +10,15 @@ var solveControl = L.Control.extend({
     map.solveControl = this;
     this._div = L.DomUtil.create('div', 'custom-control icon-control solve-control');
     this._div.title = 'Solve';
-    this._div.onclick = function(e) {
-      L.DomEvent.stopPropagation(e);
-      map.removeControl(solveControl);
-      document.getElementById('wait-icon').setAttribute('class', 'wait-icon');
 
-      map.fireEvent('solve');
-    };
+    // prevent the ui got delete
+    // this._div.onclick = function(e) {
+    //   L.DomEvent.stopPropagation(e);
+    //   map.removeControl(solveControl);
+    //   document.getElementById('wait-icon').setAttribute('class', 'wait-icon');
+
+    //   map.fireEvent('solve');
+    // };
     return this._div;
   },
 

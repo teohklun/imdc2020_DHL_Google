@@ -4,7 +4,7 @@
   use Google\Cloud\Core\ServiceBuilder;
 
   $gcloud = new ServiceBuilder([
-      'keyFilePath' => 'gjson.json',
+      'keyFilePath' => '../../../gjson.json',
       'projectId' => 'supple-folder-256709'
   ]);
 

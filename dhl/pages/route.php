@@ -10,8 +10,8 @@
       $fileName = $_POST["fileName"];
       
       $gcloud = new ServiceBuilder([
-          'keyFilePath' => 'gjson.json',
-          'projectId' => 'supple-folder-256709'
+        'keyFilePath' => '../../../gjson.json',
+        'projectId' => 'supple-folder-256709'
       ]);
 
       $storage = $gcloud->storage();

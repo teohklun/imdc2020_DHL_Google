@@ -1,6 +1,6 @@
 <?php
 
-function curl_post($url_link, $data){
+function curl_post($url_link, $data = null){
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url_link);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));

@@ -4,8 +4,6 @@ bucketName = "real-bucket-dhl"
 bucketTempName = "real-bucket-dhl-temp"
 csvPath = "3.csv"
 gStorage = 'gs://real-bucket-dhl/3.csv'
-gStorageOptimalCsv = 'gs://real-bucket-dhl/files/february/optimalRoutes.csv'
-
 singleRoutePath = "single_route"
 singleDateRoutePath = "single_date_path"
 
@@ -19,15 +17,15 @@ optimalCsvPath = "files/february/" + optimalCsvName
 gStorageOptimalCsv = "gs://real-bucket-dhl/files/february/" + optimalCsvName
 url = 'http://35.213.166.175:3000' #vroomRoute
 
-
 date = "20200204"
 session = "a"
-street = "Jalan Rumbia, Kampung Seberang Paya, 11900 Bayan Lepas, Pulau Pinang"
+street = "asdsa"
 
 defaultZip = 99
 defaultCapacity = 99999
 
-mode = "noCloud"
+# mode = "noCloud"
+mode = "noCloudaaa"
 morningStart = "08:45:00"
 morningEnd = "13:59:59"
 
@@ -71,81 +69,6 @@ from google.cloud import storage
 # from flask import Flask
 from io import StringIO
 # from flask import jsonifyaf
-
-
-# datastore_client = datastore.Client()
-
-
-# import google.cloud.storage as gcs
-# import webapp2
-
-# from google.appengine.api import app_identity
-#[END imports]
-
-#[START retries]
-# my_default_retry_params = gcs.RetryParams(initial_delay=0.2,
-#                                           max_delay=5.0,
-#                                           backoff_factor=2,
-#                                           max_retry_period=15)
-# gcs.set_default_retry_params(my_default_retry_params)
-
-# CLOUD_STORAGE_BUCKET = os.environ.get('CLOUD_STORAGE_BUCKET')
-# # Create a Cloud Storage client.
-# storage_client = gcs.Client()
-
-# # Get the bucket that the file will be uploaded to.
-# bucket = storage_client.get_bucket(CLOUD_STORAGE_BUCKET)
-
-# def get(self):
-#     # bucket_name = os.environ.get('BUCKET_NAME',
-#     #                              app_identity.get_default_gcs_bucket_name())
-
-#     # self.response.headers['Content-Type'] = 'text/plain'
-#     # self.response.write('Demo GCS Application running from Version: '
-#     #                     + os.environ['CURRENT_VERSION_ID'] + '\n')
-#     # self.response.write('Using bucket name: ' + bucket_name + '\n\n')
-# #[END get_default_bucket]
-
-#     # bucket = '/' + bucket_name
-#     filename = bucket + '/demo-testfile'
-#     # self.tmp_filenames_to_clean_up = []
-
-# def gcloudWriteFile(self, filename, content, optionWrite = "w"):
-#     """Create a file.
-
-#     The retry_params specified in the open call will override the default
-#     retry params for this particular file handle.
-
-#     Args:
-#       filename: filename.
-#     """
-#     self.response.write('Creating file %s\n' % filename)
-
-#     write_retry_params = gcs.RetryParams(backoff_factor=1.1)
-#     gcs_file = gcs.open(filename,
-#                         optionWrite,
-#                         content_type='text/plain',
-#                         options={'x-goog-meta-foo': 'foo',
-#                                  'x-goog-meta-bar': 'bar'},
-#                         retry_params=write_retry_params)
-#     gcs_file.write(content)
-#     gcs_file.close()
-#     # self.tmp_filenames_to_clean_up.append(filename)
-
-# def gcloudReadFile(self, filename):
-#     self.response.write('Abbreviated file content (first line and last 1K):\n')
-
-#     gcs_file = gcs.open(filename)
-#     self.response.write(gcs_file.read())
-#     contents = gcs_file.read()
-#     gcs_file.close()
-
-# def write_file(fileName : str, content : str):
-#     text_file = open(fileName, "w")
-#     n = text_file.write(content )
-#     text_file.close()
-
-
 
 # real-bucket-dhl/files/february/day/x/session/fileType
 def getResponseFileName(date : str, session : str )-> str:
@@ -262,8 +185,8 @@ def getMiliSec(time_str: float) -> int:
     if(len(time_str.split(':')) ==3  ):
         h, m,s = time_str.split(':')
     else:
-        print(len(time_str.split(':')))
-        print(time_str)
+        # print(len(time_str.split(':')))
+        # print(time_str)
         h, m = time_str.split(':')
         s= "00"
     
@@ -295,26 +218,66 @@ def getActualQueryAdress(companyName: str, street : str)-> str:
 
 def parseStringToHtml(string :str) -> str:
     string  =string.replace(" ","+")
+    string  =string.replace("\n","+")
+    # string  =string.replace(",","%20")
     return string
 
 def getLocationWithStreetNameOrCustomerName(companyName: str, street : str) -> List:
-    stringRquestStreet = getActualQueryAdress(parseStringToHtml(companyName), parseStringToHtml(street))
+    # print(companyName)
+    # print("company name")
+
+    if(companyName == companyName and street == street):
+        stringRquestStreet = getActualQueryAdress(parseStringToHtml(companyName), parseStringToHtml(street))
+    elif(companyName == companyName):
+        stringRquestStreet = parseStringToHtml(companyName)
+    elif(street == street):
+        stringRquestStreet = parseStringToHtml(street)
+    else:
+        print("street and company not exist")
+        return ""
     api_key = "AIzaSyA2H1uflVbzM7wtGeMlbwpLKnMkFIJdWVc"
-    url = 'https://maps.googleapis.com/maps/api/geocode/json?address=' + stringRquestStreet + ',+CA&key='+api_key+''
+    
+    # url = 'https://maps.googleapis.com/maps/api/geocode/json?address=' + stringRquestStreet + '&key='+api_key+''
+    # url = 'https://maps.googleapis.com/maps/api/geocode/json?address=' + stringRquestStreet + ',+CA&key='+api_key+''
+    url = 'https://maps.googleapis.com/maps/api/geocode/json?address=' + stringRquestStreet + '&components=country:MY&key='+api_key+''
     # url = "https://maps.googleapis.com/maps/api/js?key="+api_key+"&libraries=places"
     # url = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input="+stringRquestStreet+"&inputtype=textquery&fields=formatted_address,name,plus_code,geometry&key="+api_key+""
     # url = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=BJ Court&inputtype=textquery&fields=formatted_address,name,plus_code,geometry&key="+api_key+""
+    
+    # http://maps.googleapis.com/maps/api/geocode/json?address=[address]&components=postal_code:[postcode]&sensor=false
+
 
     payload = {'key1': 'value1', 'key2': 'value2'}
 
-    # POST with JSON 
+    # POST with JSON
     r = requests.post(url, data=json.dumps(payload))
+    print(r.content)
+    # print(r.text)
+    # print(stringRquestStreet)
+    # print(url)
 
     # Response, status etc
     r.text
     parsed = json.loads(r.text)
 
-    return parsed["results"][0]["geometry"]["location"]
+    try:
+        return parsed["results"][0]["geometry"]["location"]
+    except IndexError:
+
+        stringRquestStreet = parseStringToHtml(companyName)
+        url = 'https://maps.googleapis.com/maps/api/geocode/json?address=' + stringRquestStreet + '&components=country:MY&key='+api_key+''
+        r = requests.post(url, data=json.dumps(payload))
+        parsed = json.loads(r.text)
+        try:
+            return parsed["results"][0]["geometry"]["location"]
+        except IndexError:
+            street = street.split("EMAIL")
+            print(street)
+            stringRquestStreet = parseStringToHtml(street[0])
+            url = 'https://maps.googleapis.com/maps/api/geocode/json?address=' + stringRquestStreet + '&components=country:MY&key='+api_key+''
+            r = requests.post(url, data=json.dumps(payload))
+            parsed = json.loads(r.text)
+            return parsed["results"][0]["geometry"]["location"]
 
 def getDeliveryRoute(partialDataFrame : List, fullDataFrame : List, session : str):
 #     print("DASDASDDASDSDSDASDS")
@@ -330,7 +293,7 @@ def getDeliveryRoute(partialDataFrame : List, fullDataFrame : List, session : st
 #             valid = True
             
             if(x["Act Ckpt Code"] == "DEPAR"):
-            
+                needAddRoute = True
                 subFrame = partialDataFrame.loc[partialDataFrame["Courier id"] == x["Courier id"]]
                 subFrame.reset_index(inplace=True)
                 arraySearched.append(x["Courier id"])
@@ -378,6 +341,7 @@ def getDeliveryRoute(partialDataFrame : List, fullDataFrame : List, session : st
                     print("session error")
             
             if(deliveryListRoute != []):
+                needAddRoute = False
                 deliveryList.append(deliveryListRoute)
                 deliveryListRoute = []
             else:
@@ -399,8 +363,10 @@ def getDeliveryRoute(partialDataFrame : List, fullDataFrame : List, session : st
                         lat = 2.7047421
                         lgtd = 101.9168708
                     else:
+                        # location = getLocationWithStreetNameOrCustomerName(x["Customer Name"], x["Street"],x["zip"] if x["zip"] == x["zip"] else None)
                         location = getLocationWithStreetNameOrCustomerName(x["Customer Name"], x["Street"])
-
+                        print("testaaaaa")
+                        # print(x["Customer Name"])
                         lat = location["lat"]
                         lgtd = location["lng"]
         #                     print(lat)
@@ -413,6 +379,9 @@ def getDeliveryRoute(partialDataFrame : List, fullDataFrame : List, session : st
         if(valid):
             deliveryListRoute.append(x)
 #     print(deliveryList[0])
+
+    if(needAddRoute):
+        deliveryList.append(deliveryListRoute)
     return deliveryList, fullDataFrame
 
 def getSessionWithTimeWindowMSec(start : int, end : int):
@@ -498,7 +467,7 @@ def createDictionaryObjectJobsVehicles(jobsList : List,vehicleList : List) -> di
 
     dict_t["vehicles"] = []
     capacity = [  int (round(jobCounter/ len(vehicleList)) * 120 / 100 ) ]
-    print("capacity : "  + str(capacity))
+    # print("capacity : "  + str(capacity))
     for y in vehicleList:
         if(customCapacity):
 #         y.capacity = [ round(jobCounter/ len(vehicleList)) + 1]
@@ -674,37 +643,6 @@ def addDescriptionToStepDict(fullDF, dictStep):
         dictStep["description"] = "Street is blank"
     return dictStep
 
-def tryGotUnassignedInResponse(date : str,  session: str, street: None, unassignedJob =None ):
-
-    fullDataFrame = pd.read_csv(csvPath)
-    if(~(street != street)):
-        fullDataFrame, newAwbBooking = addJob(fullDataFrame, date, session, street)
-    
-    fullDataFrame = fullDataFrame.loc[(fullDataFrame['Courier Type'] != "NON_GCA5") ]
-    partialDataFrame = fullDataFrame
-    partialDataFrame = partialDataFrame.loc[partialDataFrame['Act Dt'] == int(date)]
-
-    deliveryListRoute, fullDataFrame = getDeliveryRoute(partialDataFrame, fullDataFrame, session)
-    jobsList, vehicleList = createJobsAndVehiclesList(deliveryListRoute, getTimeWindowWithSession(session))
-    
-    dict_t = createDictionaryObjectJobsVehicles(jobsList,vehicleList )
-    print(len(deliveryListRoute))
-    content = json.dumps(dict_t, cls=NpEncoder) 
-    # write_file("tmp/content.json", content)
-
-    gcloudWriteFile("content.json", content, "w")
-
-    data = gcloudReadFile(filename)
-
-    headers = {'content-type': 'application/json', 'Accept-Charset': 'UTF-8'}
-    # r = requests.post(url, data=open("tmp/content.json", 'rb'), headers=headers)    
-    r = requests.post(url, data=open(data, 'rb'), headers=headers)    
-    
-    # text_file = open(getResponseFileName(date, session), "wb")
-    # n = text_file.write(r.content )
-    # text_file.close()
-    gcloudWriteFile(getResponseFileName(date, session), r.content, "wb")
-
 def getResponseFileAsDict():
     import ndjson
     client = storage.Client()
@@ -720,7 +658,6 @@ def checkGFileExists(fileName : str, bucketName = bucketName) -> bool:
 #     name = 'files/february/optimalRoutes.csv'
 #     name = "files/february/response/20200204-a-447-response.json"
     return storage.Blob(bucket=bucket, name=fileName).exists(client)
-
 def handleOptimalRoute(dataFrame, columns):
     from datetime import datetime
     client = storage.Client()
@@ -799,7 +736,7 @@ def processRoutedResponse(fullDataFrame, dict_t, session):
                 startingInformation["Act Tm"] = getTime24hour(step["arrival"])
                 startingInformation["batchID"] = str(date) +  "-" + session  + "-" + str(vehicleID)
                 startingInformation["id"] = str(startingInformation["id"])
-                startingInformation["lat"], startingInformation["lgtd"] = step["location"]
+                startingInformation["lgtd"], startingInformation["lat"] = step["location"]
 
                 if(step["type"] == "end"):
     #                 startingInformation.at[startingInformation.index[0], "id"] = str(startingInformation["id"].values[0]) + "arrvd"
@@ -909,6 +846,9 @@ def tryGotUnassignedInResponse2(date : str,  session: str, street = None, unassi
     fullDataFrame = pd.read_csv(gStorage)
     tempLen = len(fullDataFrame)
     fullDataFrame = fullDataFrame.loc[(fullDataFrame['Courier Type'] != "NON_GCA5") ]
+    fullDataFrame = fullDataFrame.loc[(fullDataFrame['City'] != "CHICAGO") ]
+    # BA bad address. CA Customer Closed (business). NH customer close /not home (residential)
+    fullDataFrame = fullDataFrame.loc[(~(fullDataFrame['Act Ckpt Code'].isin(["CA","BA","NH"])) )  ]
     tempLen2 = len(fullDataFrame)
     if(tempLen> tempLen2):
         fullDataFrame.reset_index()
@@ -927,14 +867,20 @@ def tryGotUnassignedInResponse2(date : str,  session: str, street = None, unassi
     zipSet = courierAndZip.groupby(["Courier id"])["zip"].aggregate(lambda x: set(map(int, x)))
     partialDataFrame = fullDataFrame
     partialDataFrame = partialDataFrame.loc[partialDataFrame['Act Dt'] == int(date)]
+    if(partialDataFrame.empty):
+        return "date not exist in the full df"
     deliveryListRoute, fullDataFrame = getDeliveryRoute(partialDataFrame, fullDataFrame, session)
+    # print(deliveryListRoute)
+    if(not deliveryListRoute):
+        print("blank")
+        return "vehicle 0, the session maybe no vehicle and job at all"
+    
     jobsList, vehicleList = createJobsAndVehiclesList(deliveryListRoute, getTimeWindowWithSession(session), zipSet)
 
     if(len(jobsList) == 0):
         return "job is empty, it could be the date with this session no job at all ."
     
     dict_t = createDictionaryObjectJobsVehicles(jobsList,vehicleList)
-    print(len(deliveryListRoute))
 #     print(deliveryListRoute)
 #     print( dict_t)
 #     print(vehicleList[0].time_window)
@@ -950,7 +896,7 @@ def tryGotUnassignedInResponse2(date : str,  session: str, street = None, unassi
     
     if (r.status_code != 200) :
         print ("Error request code : ")
-        print(r.status_code)
+        # print(r.status_code)
         print(r.content)
 #         print(dict_t)
         return "error! " + r.status_code + "reason : " + r.content
@@ -959,7 +905,7 @@ def tryGotUnassignedInResponse2(date : str,  session: str, street = None, unassi
         dict_t = json.loads(r.content)
         for route in dict_t["routes"]:
             for step in route["steps"]:
-                print(step)
+                # print(step)
                 if(step["type"] == "job"):
                     step = addDescriptionToStepDict(partialDataFrame, step)
         content = json.dumps(dict_t)
@@ -992,7 +938,7 @@ def tryGotUnassignedInResponse2(date : str,  session: str, street = None, unassi
     # print(responseDict == [])#
 #     print(content)
     # return dict_t
-    return "sucess, view with file structure " + date + "/" + session
+    return "sucess, view with file structure " + str(date) + "/" + session
 
 def uploadFile(fileName, content, bucketName = bucketName):
     client = storage.Client()
@@ -1021,6 +967,18 @@ def getRoutedGeocode(rowID : int) -> list:
             return "contact admin"
         else:
             return jobs["lat"].to_list(), jobs["lgtd"].to_list()
+
+def getRoutedGeoCodeAndStreet(rowID : int) -> list:
+    df = pd.read_csv(gStorageOptimalCsv)
+    job = df.loc[df["id"].astype('int') == rowID]
+    if(job.empty):
+        return "rowID not find"
+    else:
+        jobs = df.loc[df["batchID"] == job["batchID"].values[0] ]
+        if(jobs.empty):
+            return "contact admin"
+        else:
+            return jobs["lat"].to_list(), jobs["lgtd"].to_list(), jobs["Street"].to_list()
 
 def getETAByID(rowID : int) -> str:
     df = pd.read_csv(gStorageOptimalCsv)
@@ -1233,44 +1191,15 @@ def confirmAddJob(rowID : int):
         uploadFile(csvPath, fullDF.to_csv(None, index=False))
         return True
 
-client = storage.Client()
-bucket = client.get_bucket(bucketName)
-fullDataFrame = pd.read_csv(gStorageOptimalCsv)
-
-client = storage.Client()
-bucket = client.get_bucket(bucketName)
-fullDataFrame = pd.read_csv(gStorageOptimalCsv)
 from numpy import nan as Nan
-fullDataFrame
-fullDataFrame['Act Tm'] = pd.to_datetime(fullDataFrame['Act Tm'])
-fullDataFrame['Act Tm'] = [time.time() for time in fullDataFrame['Act Tm']]
-time = datetime.datetime.strptime(morningStart, '%H:%M:%S').time()
-time2 = datetime.datetime.strptime(morningEnd, '%H:%M:%S').time()
-maskVehicle = (fullDataFrame["Act Ckpt Code"] == "DEPAR") | (fullDataFrame["Act Ckpt Code"] == "ARRVD")
-tasks = fullDataFrame.loc[~ (maskVehicle)]
-# print(tasks)
 
-dfVehicle = fullDataFrame.loc[maskVehicle]
-dateList = [20200201]
-dfXDayVehicle = dfVehicle.loc[dfVehicle["Act Dt"].astype(int).isin(dateList)]
 
-# dateDF = pd.to_datetime(fullDataFrame["Act Dt"], format='%Y%m%d')
-fullDataFrame["Act Dt"] = pd.to_datetime(fullDataFrame["Act Dt"], format='%Y%m%d')
-dateDF = fullDataFrame.groupby(fullDataFrame['Act Dt'].dt.weekday_name)["id"].nunique()
-dayDF = fullDataFrame.groupby(fullDataFrame['Act Dt'].dt.day)["id"].nunique()
 
-sessionMMask = ((tasks['Act Tm'] >= time) & (tasks['Act Tm'] <= time2)) 
-sessionMMask.value_counts()
-
-morning = tasks.loc[sessionMMask]
-afternoon = tasks.loc[~sessionMMask]
-
-type(dayDF.astype(int))
-dayDF.astype(int)[1]
-
-client = storage.Client()
-bucket = client.get_bucket(bucketName)
-dfReturn = pd.read_csv(gStorageOptimalCsv)
+def getOptimalDataFrame():
+    client = storage.Client()
+    bucket = client.get_bucket(bucketName)
+    dfReturn = pd.read_csv(gStorageOptimalCsv)
+    return dfReturn
 
 morningSSec = datetime.datetime.strptime(morningStart, '%H:%M:%S').time()
 morningESec = datetime.datetime.strptime(morningEnd, '%H:%M:%S').time()
@@ -1280,16 +1209,16 @@ afternoonESec = datetime.datetime.strptime(afternoonEnd, '%H:%M:%S').time()
 #vehicle
 def getVehicleInMonth(month = 2):
     maskVehicle = (dfReturn["Act Ckpt Code"] == "DEPAR") | (fullDataFrame["Act Ckpt Code"] == "ARRVD")
-    dfVehicle = dfReturn.loc[maskVehicle]
+    dfVehicle = getOptimalDataFrame().loc[maskVehicle]
     return len(dfVehicle)
 
 def getVehicleDateInMonth(date,month =2):
     maskVehicle = (dfReturn["Act Ckpt Code"] == "DEPAR") | (fullDataFrame["Act Ckpt Code"] == "ARRVD")
-    dfVehicle = dfReturn.loc[(maskVehicle) & (dfReturn["Act Dt"].astype(int) == int(date)) ]
+    dfVehicle = getOptimalDataFrame().loc[(maskVehicle) & (dfReturn["Act Dt"].astype(int) == int(date)) ]
     return len(dfVehicle)
 
 def getVehicleDateSessionInMonth(date,session,month = 2):
-    dfLocal = dfReturn.copy()
+    dfLocal = getOptimalDataFrame().copy()
     maskVehicle = (dfLocal["Act Ckpt Code"] == "DEPAR") | (dfLocal["Act Ckpt Code"] == "ARRVD")
     dfLocal['Act Tm'] = pd.to_datetime(dfLocal['Act Tm'])
     dfLocal['Act Tm'] = [time.time() for time in dfLocal['Act Tm']]
@@ -1305,7 +1234,7 @@ def getVehicleDateSessionInMonth(date,session,month = 2):
 
 #get routeIDS
 def getBatchID():
-    dfLocal = dfReturn.copy()
+    dfLocal = getOptimalDataFrame().copy()
     dfLocal = dfLocal["batchID"].unique()
 #     print(type(list(dfLocal)))
     dict_t = {}
@@ -1316,12 +1245,12 @@ def getBatchID():
     return dfLocal.to_json()
 
 def getRoute(batchID):
-    dfLocal = dfReturn.copy()
+    dfLocal = getOptimalDataFrame().copy()
     dfLocal = dfLocal.loc[dfLocal["batchID"].isin(batchID)]
 #     dfLocal = dfLocal.loc[dfLocal["duration"]]
 
 def getVehicle(courierID = None, date=None, action=None, s=None,weekDay=None, perDay=None):
-    dfLocal = dfReturn.copy()
+    dfLocal = getOptimalDataFrame().copy()
     dfLocal["Act Dt"] = pd.to_datetime(dfReturn["Act Dt"], format='%Y%m%d')
     maskVehicle = (dfLocal["Act Ckpt Code"] == "DEPAR") | (dfLocal["Act Ckpt Code"] == "ARRVD")
     dfLocal = dfLocal.loc[maskVehicle]
@@ -1348,23 +1277,23 @@ def getVehicle(courierID = None, date=None, action=None, s=None,weekDay=None, pe
         return dfLocal.to_json()
     return len(dfLocal)
 
-def getJob(date=None, action=None, s=None, mode="weekDay"):
+def getJob(date=None, action=None, s=None, names=None, time=[], tMode="before", mode="weekDay"):
     client = storage.Client()
     bucket = client.get_bucket(bucketName)
     dfReturn = pd.read_csv(gStorageOptimalCsv)
     # date = pd.to_datetime(date)
-    dfLocal = dfReturn.copy()
+    dfLocal = getOptimalDataFrame().copy()
     # dfLocal["Act Dt"] = pd.to_datetime(dfReturn["Act Dt"], format='%Y%m%d')
     maskVehicle = (dfLocal["Act Ckpt Code"] == "DEPAR") | (dfLocal["Act Ckpt Code"] == "ARRVD")
     dfLocal = dfLocal.loc[~maskVehicle]
     dfLocal["Act Tm2"] = dfLocal["Act Tm"]
+    dfLocal['Act Tm'] = pd.to_datetime(dfLocal['Act Tm'])
+    dfLocal['Act Tm'] = [time.time() for time in dfLocal['Act Tm']]
     if(action):
         dfLocal = dfLocal.loc[dfLocal["Act Base"] == action]
     if(date):
         dfLocal = dfLocal.loc[dfLocal["Act Dt"].isin(date)]
     if(s):
-        dfLocal['Act Tm'] = pd.to_datetime(dfLocal['Act Tm'])
-        dfLocal['Act Tm'] = [time.time() for time in dfLocal['Act Tm']]
         if(s=="m"):
             dfLocal = dfLocal.loc[(dfLocal["Act Tm"] >= morningSSec) & (dfLocal["Act Tm"] <= morningESec)]
         elif(s=="a"):
@@ -1374,19 +1303,37 @@ def getJob(date=None, action=None, s=None, mode="weekDay"):
     dfLocal["Act Dt"] = pd.to_datetime(dfReturn["Act Dt"], format='%Y%m%d')
 
     if(time):
-        dfLocal = dfLocal.loc[dfLocal["Act Dt"].isin(date)]
+        if(tMode == "before"):
+            startSec = datetime.datetime.strptime(time[0], '%H:%M:%S').time()
+            dfLocal = dfLocal.loc[(dfLocal["Act Tm"] <= startSec)]
+        elif(tMode == "after"):
+            startSec = datetime.datetime.strptime(time[0], '%H:%M:%S').time()
+            dfLocal = dfLocal.loc[(dfLocal["Act Tm"] >= startSec)]
+        elif(tMode == "between"):
+            if(len(time) > 1):
+                startSec = datetime.datetime.strptime(time[0], '%H:%M:%S').time()
+                endSec = datetime.datetime.strptime(time[1], '%H:%M:%S').time()
+                dfLocal = dfLocal.loc[(dfLocal["Act Tm"] >= startSec) | (dfLocal["Act Tm"] <= endSec)]
+            else:
+                return jsonify([])
+        else:
+            print("tMode not found")
+            return jsonify([])
 
-    if(name):
-        dfLocal = dfLocal.loc[dfLocal["Courier id"].isin(name)]
+    print(dfLocal)
+    if(names is not None):
+        dfLocal = dfLocal.loc[dfLocal["Courier id"].isin(names)]
 
     if(mode == "weekday"):
         days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday', 'Sunday']
         if (dfLocal.empty):
-            print("HASDASDASDASDASDS")
+            return jsonify([])
         dfLocal = dfLocal.groupby(dfLocal['Act Dt'].dt.weekday_name)["id"].nunique().reindex(days)
 
         return dfLocal.to_json()
     elif(mode == "month"):
+        if (dfLocal.empty):
+            return jsonify([])
         dfLocal = dfLocal.groupby(dfLocal['Act Dt'].dt.day)["id"].nunique()
         return dfLocal.to_json()
     elif(mode == "day"):
@@ -1414,8 +1361,6 @@ def getDriverNameList():
 
 
 #action
-def getJobInAction():
-    return []
 
 from flask import Flask, render_template
 from flask import jsonify
@@ -1430,10 +1375,15 @@ def test12312():
 @app.route('/getGeo')
 def fun1():
     rowID = int(request.args.get('rowID'))
-    a,b = getRoutedGeocode(rowID)
+    lat,lgtd,street = getRoutedGeoCodeAndStreet(rowID)
     c = {}
-    c["lat"] = a
-    c["lgtd"] = b
+    # c["lat"] = a
+    # c["lgtd"] = b
+    c["location"] = {}
+    c["location"]["lat"] = lat
+    c["location"]["lgtd"] = lgtd
+    c["address"] = street
+
     j = json.dumps(c)
     return j
 
@@ -1531,8 +1481,20 @@ def test2():
         action = json["action"]
     if("mode" in json):
         mode = json["mode"]
+    if("t-mode" in json):
+        tMode = json["t-mode"]
+    names = None
+    if("names" in json):
+        names = json["names"]
+    time = []
+    if("StartTime" in json and json["StartTime"] != ""):
+        time.append(json["StartTime"])
+    if("EndTime" in json and json["EndTime"] != ""):
+        time.append(json["EndTime"])
+    print(json)
+
     # print(getJob(dates, action, session, mode))
-    toReturn = getJob(dates, action, session, mode)
+    toReturn = getJob(dates, action, session, names, time, tMode, mode)
     return toReturn
     # return "adas"
 # [END gae_python37_datastore_store_and_fetch_times]
@@ -1545,6 +1507,31 @@ def fun7():
     session = json["session"]
 
     return jsonify(tryGotUnassignedInResponse2(str(date),  session))
+
+@app.route('/buildRoutes', methods=["get"])
+def runOneMonth():
+    client = storage.Client()
+    bucket = client.get_bucket(bucketName)
+    fullDataFrame = pd.read_csv(gStorage)
+    dates = list(fullDataFrame["Act Dt"].unique())
+    # dates.remove(20200201)
+    # dates.remove(20200203)
+    # dates.remove(20200204)
+    # dates.remove(20200205)
+    # dates.remove(20200206)
+    # dates.remove(20200207)
+    # dates.remove(20200208)
+    # dates.remove(20200210)
+    # dates.remove(20200211)
+    dates = [20200218,20200219,20200220,20200221,20200222,20200223,20200224,20200225,20200226,20200227,20200228,20200229]
+    for x in dates:
+        print(x)
+        tryGotUnassignedInResponse2(x ,  "m")
+        tryGotUnassignedInResponse2(x ,  "a")
+        
+    # tryGotUnassignedInResponse2(20200222 ,  "m")
+    # print(dates)
+    return "done"
 
 @app.route('/getDriverList', methods=["POST", "GET"])
 def fun8():

@@ -6,3 +6,4 @@ include_once "../utility/common_func.php";
 include_once "../utility/packed_js.php";
 include_once "../utility/packed_css.php";
 include_once "../utility/packed_library.php";
+require '../vendor/autoload.php';

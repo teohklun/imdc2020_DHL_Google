@@ -9,20 +9,16 @@ var address = require('./utils/address');
 var fileHandler = require('./utils/file_handler');
 var solutionHandler = require('./utils/solution_handler');
 
-window.x = function(){
-  console.log("hello window function");
-}
-
 panelControl.addTo(LSetup.map);
 collapseControl.addTo(LSetup.map);
 fileHandler.setFile();
 fileHandler.setGeoFile();
 
-LSetup.map.on('click', function(e) {
-  locationsHandler.addPlace(e.latlng);
-});
+// LSetup.map.on('click', function(e) {
+//   locationsHandler.addPlace(e.latlng);
+// });
 
-LSetup.map.on('solve', solutionHandler.solve);
+// LSetup.map.on('solve', solutionHandler.solve);
 
 geocoder.control.markGeocode = function(result) {
   locationsHandler.addPlace(result.geocode.center,

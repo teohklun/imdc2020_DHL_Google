@@ -320,7 +320,8 @@ var _deleteAmounts = function() {
   for (var j = 0; j < data.jobs.length; j++) {
     delete data.jobs[j].amount;
   }
-  alert("All capacity/amounts constraints have been removed.")
+
+  // alert("All capacity/amounts constraints have been removed.")
 }
 
 var addVehicle = function(v) {
@@ -915,7 +916,6 @@ module.exports = {
   addJob: addJob,
   checkControls: checkControls,
   setData: setData,
-  setData2: setData2,
   setSolution: setSolution,
   addGeometries: addGeometries,
 };
