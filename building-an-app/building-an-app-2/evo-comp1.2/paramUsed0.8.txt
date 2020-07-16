@@ -1,0 +1,14 @@
+HUMANSIZE : 60
+GENE : 120
+CAPACITY : 5000
+POP_SIZE : 30
+CO_probability : 0.9
+MUT_PROBABILITY : 0.15
+MAX_GENERATION : 10
+SEAT_OCCUPIED_CHANCE : 50
+minHumanWeight : 20
+maxHumanWeight : 100
+minLuggageWeight : 5
+maxLuggageWeight : 25
+weightChromosomeH : 0.75
+weightChromosomeL : 0.25

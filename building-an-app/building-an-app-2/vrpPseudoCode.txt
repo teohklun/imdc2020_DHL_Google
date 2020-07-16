@@ -1,0 +1,43 @@
+module simple VRP 
+1 Input vehicle and jobs.
+2 check vehicles and job data type, range value valid or not
+  2.1 else return error message
+3 check vehicles can handle all jobs capacity 
+(jobs capacity / vehicles * capacitySelf < 1)
+  3.1 else return error message
+4 get distance matrix with job geocode and the origin of vehicles
+  4.1 return error message //if fail to retrieve distance matrix from geocoding services
+5 descendingSort(vehicles) // get the highest capacity vehicle as first to insert task
+  5.1 enter the jobs with condition of most close distance to the origin
+  Initialize list r, routes, tempJob =  job.copy()
+    5.1.1 Loop v in vehicles
+      5.1.2 intialize sRouteCost = 0
+      5.1.3 Loop j in tempJob
+        5.1.3.1 If distanceMatrix[j][v] is smallest cost
+          5.1.3.2 if not vehicle[v].canAddJob(job[j]) and vehicle[v].timeBetween(job[j])
+            5.1.3.2.1 break
+          5.1.3.3 Insert tempJob[j] into vehicles[v]
+          5.1.3.4 remove tempJob[j] // so it will not be use again
+          5.1.3.5 sRouteCost += job[j].distance
+      5.1.4 insert vehicle[v] into r
+      5.1.5 r.cost += sRouteCost
+6 r.unassigned = tempJob // blank or some job
+7 return r // simple VRP solved
+
+program apply heuristic operator to routes
+1 input routes
+1.1 routeFutureLimit = 2
+  1.2 localRoutes = routes.getRoutes(routeFutureLimit)
+// keep find routeFutureLimit possibile from routes
+  2.1 initialize noImprove = 0
+  2.2 while noImprove < allowedLoop
+    2.2.1 beforeChangeTotalCost = getTotalCostOfRoutes(localRoutes)
+    2.2.2 tempRoutes = applyPossibleHeuristicOperator(routes)
+    // will apply the operator until best found and return
+    2.2.3 if(! getTotalCostOfRoutes(localRoutes) < beforeChangeTotalCost)
+    2.2.3.1 noImprove += 1
+    2.2.3.2 else noImprove = 0
+    2.2.4 routes = tempRoutes
+3 return routes
+  
+

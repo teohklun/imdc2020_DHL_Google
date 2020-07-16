@@ -1,0 +1,7 @@
+﻿  source.cpp
+c:\users\nabil-pc\desktop\evo-comp1.2\evo-comp1.2\source.cpp(23): warning C4305: 'initializing': truncation from 'double' to 'float'
+c:\users\nabil-pc\desktop\evo-comp1.2\evo-comp1.2\source.cpp(24): warning C4305: 'initializing': truncation from 'double' to 'float'
+c:\users\nabil-pc\desktop\evo-comp1.2\evo-comp1.2\source.cpp(72): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+c:\users\nabil-pc\desktop\evo-comp1.2\evo-comp1.2\source.cpp(191): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\nabil-pc\desktop\evo-comp1.2\evo-comp1.2\source.cpp(225): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  evo-comp1.2.vcxproj -> C:\Users\NABIL-PC\Desktop\evo-comp1.2\Debug\evo-comp1.2.exe
